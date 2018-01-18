@@ -93,3 +93,11 @@ void Shader::setUniform(char * str, glm::vec4 &v)
 {
 	glUniform4fv(glGetUniformLocation(program, str), 1, &v.x);
 }
+void Shader::setUniform(char * str, glm::mat3 &m)
+{
+	glUniformMatrix3fv(glGetUniformLocation(program, str), 1, false, &m[0].x);
+}
+void Shader::setUniform(char * str, glm::mat4 &m)
+{
+	glUniformMatrix4fv(glGetUniformLocation(program, str), 1, false, &m[0].x);
+}

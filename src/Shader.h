@@ -17,6 +17,8 @@ public:
 	void setUniform(char * str, glm::vec2 &v);
 	void setUniform(char * str, glm::vec3 &v);
 	void setUniform(char * str, glm::vec4 &v);
+	void setUniform(char * str, glm::mat3 &m);
+	void setUniform(char * str, glm::mat4 &m);
 	inline int getProgram() { return program; }
 private:
 	GLuint program;
