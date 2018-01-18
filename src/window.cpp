@@ -9,7 +9,7 @@ Window::Window(int _width, int _height) : width(_width), height(_height)
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	window = glfwCreateWindow(width, height, "QuestionMark", nullptr, nullptr);
+	window = glfwCreateWindow(width, height, "AdvGraphics", nullptr, nullptr);
 
 	if(window == nullptr)
 	{

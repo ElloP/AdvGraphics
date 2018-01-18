@@ -1,13 +1,19 @@
 #include "Window.h"
 #include "vector.h"
 
+void render()
+{
+	Window w = Window(800, 600);
+	while(!w.windowShouldClose())
+	{
+		glClearColor(0.5, 0.1, 0.3, 1);
+		glClear(GL_COLOR_BUFFER_BIT);
+		w.update();
+	}
+}
+
 int main()
 {
-	vec4 x = vec4(1,2,3,4);
-	vec4 y = vec4(4,5,2,7);
-
-	vec4 z = x.normalize();
-	y = x + z + y;
-
+	render();
 	return 0;
 }
