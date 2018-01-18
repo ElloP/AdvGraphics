@@ -67,3 +67,29 @@ void Shader::checkCompileErrors(unsigned int shader, std::string type)
 		}
 	}
 }
+
+// int
+void Shader::setUniform(char * str, int i) 
+{
+	glUniform1i(glGetUniformLocation(program, str), i);
+}
+// float
+void Shader::setUniform(char * str, float f)
+{
+	glUniform1f(glGetUniformLocation(program, str), f);
+}
+// vec2
+void Shader::setUniform(char * str, glm::vec2 &v) 
+{
+	glUniform2fv(glGetUniformLocation(program, str), 1, &v.x);
+}
+// vec3
+void Shader::setUniform(char * str, glm::vec3 &v)
+{
+	glUniform3fv(glGetUniformLocation(program, str), 1, &v.x);
+}
+// vec4
+void Shader::setUniform(char * str, glm::vec4 &v)
+{
+	glUniform4fv(glGetUniformLocation(program, str), 1, &v.x);
+}
