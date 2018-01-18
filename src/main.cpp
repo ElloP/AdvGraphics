@@ -1,13 +1,16 @@
 #include "Window.h"
 #include "vector.h"
+#include "Shader.h"
 
 void render()
 {
-	Window w = Window(800, 600);
+	Window w(800, 600);
+	
+	
 	while(!w.windowShouldClose())
 	{
-		glClearColor(0.5, 0.1, 0.3, 1);
-		glClear(GL_COLOR_BUFFER_BIT);
+		w.processInput();
+		//do stuff
 		w.update();
 	}
 }
