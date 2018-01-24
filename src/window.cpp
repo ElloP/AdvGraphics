@@ -31,14 +31,26 @@ Window::~Window()
 }
 
 //Note(Olle): for now, only shuts down when user presses escape
-void Window::processInput()
+/*void Window::processInput()
 {
 	if(glfwGetKey(this->window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(this->window, true);
 }
 
+bool Window::processKey(char c) {
+	switch (c) {
+	case 'A': return glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS;
+	case 'W': return glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS;
+	case 'S': return glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS;
+	case 'D': return glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS;
+	default: return false;
+
+	}
+}
+*/
 void Window::update(void)
 {
+
 	glfwSwapBuffers(window);
 	glfwPollEvents();
 }

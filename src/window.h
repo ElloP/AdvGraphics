@@ -11,7 +11,13 @@ public:
 	~Window();
 
 	void update(void);
-	void processInput();
+	//void processInput();
+	//bool processKey(char c);
+
+	inline GLFWwindow* getWindow()
+	{
+		return window;
+	}
 
 	inline void setWidth(unsigned int _width)
 	{
