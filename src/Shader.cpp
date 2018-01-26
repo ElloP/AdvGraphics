@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 
+
 //using a part of labhelper and learnopengl.com implementations to load shaders
 Shader::Shader(const char* vertexPath, const char* fragmentPath)
 {

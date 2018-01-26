@@ -5,7 +5,7 @@
 #include "Texture.h"
 #include "Camera.h"
 #include "VertexData.h"
-
+#include "EnvironmentMap.h"
 
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
@@ -94,6 +94,15 @@ void render()
 	
 	float blendAmount = 0;
 
+	
+	EnvironmentMap env_map(
+		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/posx.jpg",
+		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/negx.jpg",
+		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/posy.jpg",
+		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/negy.jpg",
+		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/posz.jpg",
+		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/negz.jpg"
+	);
 
 	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
@@ -111,6 +120,8 @@ void render()
 		glClearColor(0.0, 0.2, 0.3, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+
 		// set lamp
 		lampShader.use();
 		glm::mat4 model(1);
@@ -121,6 +132,8 @@ void render()
 		lampShader.setUniform("view", camera.GetViewMatrix());
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
 		lampShader.setUniform("projection", projection);
+
+
 
 		glBindVertexArray(lampVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -142,7 +155,7 @@ void render()
 		glBindVertexArray(cubeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		
+		env_map.draw(camera.GetViewMatrix(), projection);
 
 	/*	s.setUniform("view", camera.GetViewMatrix());
 		

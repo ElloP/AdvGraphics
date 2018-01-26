@@ -10,6 +10,7 @@ class Shader
 {
 public:
 	Shader(const char* vertexPath, const char* fragmentPath);
+	Shader() = default;
 
 	void setUniform(char * str, int i);
 	void setUniform(char * str, float f);
