@@ -82,7 +82,7 @@ void render()
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 	// texture coord attribute
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (6 * sizeof(float)));
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
 	// light
@@ -109,8 +109,13 @@ void render()
 
 	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
-	Light light;
-	light.tutorial(lightPos);
+	Light dirLight;
+	dirLight.tutorial(lightPos);
+	PointLight pointLight;
+	pointLight.light = dirLight;
+	pointLight.constant = 1.0f;
+	pointLight.linear = 0.09f;
+	pointLight.quadratic = 0.032f;
 
 	while(!w.windowShouldClose())
 	{
@@ -158,30 +163,40 @@ void render()
 		cubeShader.setUniform("projection", projection);
 		cubeShader.setUniform("viewPos", camera.Position);
 		
-
 		cubeShader.setUniform("material.shininess", m.shininess);
 
-		// funky lighting
-		/*glm::vec3 lightColor;
-		lightColor.x = sin(glfwGetTime() * 2.0f);
-		lightColor.y = sin(glfwGetTime() * 0.7f);
-		lightColor.z = sin(glfwGetTime() * 1.3f);
+		pointLight.light.position = lightPos;
 
-		glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
-		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
+		cubeShader.setUniform("dirLight.direction", glm::vec3(-0.2f,-1.0f,-0.3f));//dirLight.position);
+		cubeShader.setUniform("dirLight.ambient", dirLight.ambient);
+		cubeShader.setUniform("dirLight.diffuse", dirLight.diffuse);
+		cubeShader.setUniform("dirLight.specular", dirLight.specular);
 
-		light.setDiffuse(diffuseColor);
-		light.setAmbient(ambientColor); */
-		light.position = lightPos;
+		cubeShader.setUniform("pointLight.position", pointLight.light.position);
+		cubeShader.setUniform("pointLight.ambient", pointLight.light.ambient);
+		cubeShader.setUniform("pointLight.diffuse", pointLight.light.diffuse);
+		cubeShader.setUniform("pointLight.specular", pointLight.light.specular);
+		cubeShader.setUniform("pointLight.constant", pointLight.constant);
+		cubeShader.setUniform("pointLight.linear", pointLight.linear);
+		cubeShader.setUniform("pointLight.quadratic", pointLight.quadratic);
+		
 
-		cubeShader.setUniform("light.position", light.position);
-		cubeShader.setUniform("light.ambient", light.ambient);
-		cubeShader.setUniform("light.diffuse", light.diffuse);
-		cubeShader.setUniform("light.specular", light.specular);
+		cubeShader.setUniform("spotLight.position", camera.Position);
+		cubeShader.setUniform("spotLight.direction", camera.Front);
+		cubeShader.setUniform("spotLight.cutoff", glm::cos(glm::radians(10.0f)));
+		cubeShader.setUniform("spotLight.outerCutoff", glm::cos(glm::radians(13.5f)));
+		cubeShader.setUniform("spotLight.ambient", glm::vec3(.1f));
+		cubeShader.setUniform("spotLight.diffuse", glm::vec3(.8f));
+		cubeShader.setUniform("spotLight.specular", glm::vec3(1.0f));
 
+		
 		glBindVertexArray(cubeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
+		model = glm::translate(model, glm::vec3(1.5, 1.5, 1.5));
+		cubeShader.setUniform("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		
 		//env_map.draw(camera.GetViewMatrix(), projection);
 		
 	/*	s.setUniform("view", camera.GetViewMatrix());
