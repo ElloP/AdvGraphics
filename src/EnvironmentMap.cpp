@@ -8,19 +8,72 @@ EnvironmentMap::EnvironmentMap(char *faces[6]) : EnvironmentMap(faces[0], faces[
 
 EnvironmentMap::EnvironmentMap(char *faceX, char *facenegX, char *faceY, char *facenegY, char *faceZ, char *facenegZ)
 {
+	float vertices[] = { 
+		-1.0f,  1.0f, -1.0f,
+		-1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f, -1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+
+		-1.0f, -1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f, -1.0f,  1.0f,
+		-1.0f, -1.0f,  1.0f,
+
+		-1.0f,  1.0f, -1.0f,
+		1.0f,  1.0f, -1.0f,
+		1.0f,  1.0f,  1.0f,
+		1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f,  1.0f,
+		-1.0f,  1.0f, -1.0f,
+
+		-1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		1.0f, -1.0f, -1.0f,
+		1.0f, -1.0f, -1.0f,
+		-1.0f, -1.0f,  1.0f,
+		1.0f, -1.0f,  1.0f
+	};
+
+	glGenVertexArrays(1, &vao);
+	glGenBuffers(1, &vbo);
+	glBindVertexArray(vao);
+	glBindBuffer(GL_ARRAY_BUFFER, vbo);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
 	glGenTextures(1, &id);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 
 	int width, height, nrChannels;
 	unsigned char *data;
 	data = stbi_load(faceX, &width, &height, &nrChannels, 0);
+
 	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	data = stbi_load(facenegX, &width, &height, &nrChannels, 0);
 	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	data = stbi_load(faceY, &width, &height, &nrChannels, 0);
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	data = stbi_load(facenegY, &width, &height, &nrChannels, 0);
 	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	data = stbi_load(facenegY, &width, &height, &nrChannels, 0);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	data = stbi_load(faceZ, &width, &height, &nrChannels, 0);
 	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	data = stbi_load(facenegZ, &width, &height, &nrChannels, 0);
@@ -36,15 +89,13 @@ EnvironmentMap::EnvironmentMap(char *faceX, char *facenegX, char *faceY, char *f
 
 	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 
-	shader = Shader("C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\Shaders\\cubemap.vs", 
-		"C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\Shaders\\cubemap.fs");
+	shader = Shader(&(root + "src/Shaders/cubemap.vs")[0u], &(root + "src/Shaders/cubemap.fs")[0u]);
 }
 
 void EnvironmentMap::bind()
 {
-	
-	glBindTexture(GL_TEXTURE_2D, id);
 	glActiveTexture(GL_TEXTURE6);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 	
 }
 void EnvironmentMap::unbind()
@@ -53,13 +104,15 @@ void EnvironmentMap::unbind()
 }
 void EnvironmentMap::draw(const glm::mat4 &view, const glm::mat4 &projection)
 {
-	glDepthMask(GL_FALSE);
-	bind();
-	shader.use();
-	glm::mat4 inverse = glm::inverse(projection * view);
-	shader.setUniform("inv_PV", inverse);
-	shader.setUniform("camera_pos", glm::vec3(view[0].w,view[1].w,view[2].w));
-		FullscreenQuad::drawFullscreenQuad();
-	unbind();
-	glDepthMask(GL_TRUE);
+
+	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
+	shader.use(); 
+	shader.setUniform("view", glm::mat4(glm::mat3(view)));
+	shader.setUniform("projection", glm::mat4(projection));
+	glBindVertexArray(vao);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glBindVertexArray(0);
+	glDepthFunc(GL_LESS); // set depth function back to default
 }

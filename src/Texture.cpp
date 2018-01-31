@@ -2,7 +2,7 @@
 #include "stb_image.h"
 #include <iostream>
 
-Texture::Texture(char* path)
+Texture::Texture(const char* path)
 {
 	initTexture(path);
 }
@@ -18,7 +18,7 @@ void Texture::unbind()
 	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void Texture::initTexture(char* path) 
+void Texture::initTexture(const char* path) 
 {
 	int width, height, channels;
 	stbi_set_flip_vertically_on_load(true);
