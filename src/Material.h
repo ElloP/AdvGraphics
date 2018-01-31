@@ -12,4 +12,11 @@ public:
 		specular = glm::vec3(0.628281, 0.555802, 0.366065);
 		shininess = 0.4f;
 	}
+	void tutorial()
+	{
+		ambient = glm::vec3(1.0f, .5f, 0.31f);
+		diffuse = glm::vec3(1.0f,0.5f,0.31f);
+		specular = glm::vec3(0.5f, 0.5f, 0.5f);
+		shininess = 32.0f;
+	}
 };
