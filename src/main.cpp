@@ -6,6 +6,9 @@
 #include "Camera.h"
 #include "VertexData.h"
 #include "EnvironmentMap.h"
+#include "Light.h"
+
+
 
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
@@ -31,10 +34,9 @@ const char* lightfsPath = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\Shade
 const char* lampvsPath = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\Shaders\\lamp.vs";
 const char* lampfsPath = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\Shaders\\lamp.fs";
 
-
 // texture paths
-char* texture1path = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\text.jpg";
-char* texture2path = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\images.jpg";
+char* texture1path = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\container2.png";
+char* texture2path = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\container2_specular.png";
 
 
 
@@ -49,9 +51,10 @@ void render()
 	glfwSetInputMode(w.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
 
+
 	Material m;
-	m.gold();
-	Shader lightShader(lightvsPath, lightfsPath);
+	m.tutorial();
+	Shader cubeShader(lightvsPath, lightfsPath);
 	Shader lampShader(lampvsPath, lampfsPath);
 	Texture t1(texture1path);
 	t1.id = 0;
@@ -106,6 +109,9 @@ void render()
 
 	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
+	Light light;
+	light.tutorial(lightPos);
+
 	while(!w.windowShouldClose())
 	{
 		static float rot = glm::radians(44.0f);
@@ -139,24 +145,45 @@ void render()
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		t1.bind();
+		t2.bind();
 		// set cube
-		lightShader.use();
-		lightShader.setUniform("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
-		lightShader.setUniform("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+		cubeShader.use();
+		cubeShader.setUniform("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+		cubeShader.setUniform("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
 		model = glm::mat4(1);
 		model = glm::scale(model, glm::vec3(3.0f, 3.0f, 3.0f));
-		lightShader.setUniform("model", model);
-		lightShader.setUniform("view", camera.GetViewMatrix());
+		cubeShader.setUniform("model", model);
+		cubeShader.setUniform("view", camera.GetViewMatrix());
 		projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
-		lightShader.setUniform("projection", projection);
-		lightShader.setUniform("lightPosition", lightPos);
-		lightShader.setUniform("viewPos", camera.Position);
+		cubeShader.setUniform("projection", projection);
+		cubeShader.setUniform("viewPos", camera.Position);
+		
+
+		cubeShader.setUniform("material.shininess", m.shininess);
+
+		// funky lighting
+		/*glm::vec3 lightColor;
+		lightColor.x = sin(glfwGetTime() * 2.0f);
+		lightColor.y = sin(glfwGetTime() * 0.7f);
+		lightColor.z = sin(glfwGetTime() * 1.3f);
+
+		glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
+		glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f); // low influence
+
+		light.setDiffuse(diffuseColor);
+		light.setAmbient(ambientColor); */
+		light.position = lightPos;
+
+		cubeShader.setUniform("light.position", light.position);
+		cubeShader.setUniform("light.ambient", light.ambient);
+		cubeShader.setUniform("light.diffuse", light.diffuse);
+		cubeShader.setUniform("light.specular", light.specular);
 
 		glBindVertexArray(cubeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
-		env_map.draw(camera.GetViewMatrix(), projection);
-
+		//env_map.draw(camera.GetViewMatrix(), projection);
+		
 	/*	s.setUniform("view", camera.GetViewMatrix());
 		
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
