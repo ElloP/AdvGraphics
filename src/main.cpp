@@ -6,9 +6,8 @@
 #include "Camera.h"
 #include "VertexData.h"
 #include "EnvironmentMap.h"
+#include "root.h"
 #include "Light.h"
-
-
 
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
@@ -28,17 +27,18 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+
+
+// I HAVE NO IDEA WHY THESE NEEDS TO BE STRINGS, AND THEN c_str() and not simply const char* lightvsPath = (root + "src/Shaders/light.vs").c_str();
 // shaders paths
-const char* lightvsPath = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\Shaders\\light.vs";
-const char* lightfsPath = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\Shaders\\light.fs";
-const char* lampvsPath = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\Shaders\\lamp.vs";
-const char* lampfsPath = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\Shaders\\lamp.fs";
+std::string lightvsPath = (root + "src/Shaders/light.vs");
+std::string lightfsPath = (root + "src/Shaders/light.fs");
+std::string lampvsPath = (root + "src/Shaders/lamp.vs");
+std::string lampfsPath = (root + "src/Shaders/lamp.fs");
 
 // texture paths
-char* texture1path = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\container2.png";
-char* texture2path = "C:\\Skola\\Advanced Graphics\\AdvGraphics\\src\\container2_specular.png";
-
-
+std::string texture1path = (root + "src/container2.png");
+std::string texture2path = (root + "src/container2_specular.png");
 
 void render()
 {
@@ -54,11 +54,12 @@ void render()
 
 	Material m;
 	m.tutorial();
-	Shader cubeShader(lightvsPath, lightfsPath);
-	Shader lampShader(lampvsPath, lampfsPath);
-	Texture t1(texture1path);
+	Shader cubeShader(lightvsPath.c_str(), lightfsPath.c_str());
+	Shader lampShader(lampvsPath.c_str(), lampfsPath.c_str());
+	Texture t1(texture1path.c_str());
+
 	t1.id = 0;
-	Texture t2(texture2path);
+	Texture t2(texture2path.c_str());
 	t2.id = 1;
 
 	glm::vec3 cubePositions[] = {
@@ -99,12 +100,12 @@ void render()
 
 	
 	EnvironmentMap env_map(
-		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/posx.jpg",
-		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/negx.jpg",
-		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/posy.jpg",
-		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/negy.jpg",
-		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/posz.jpg",
-		"C:/Skola/Advanced Graphics/AdvGraphics/src/Cubemap/negz.jpg"
+		&(root + "src/Cubemap/posx.jpg")[0u],
+		&(root + "src/Cubemap/negx.jpg")[0u],
+		&(root + "src/Cubemap/posy.jpg")[0u],
+		&(root + "src/Cubemap/negy.jpg")[0u],
+		&(root + "src/Cubemap/posz.jpg")[0u],
+		&(root + "src/Cubemap/negz.jpg")[0u]
 	);
 
 	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
@@ -131,8 +132,6 @@ void render()
 		glClearColor(0.0, 0.2, 0.3, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-
-
 		// set lamp
 		lampShader.use();
 		glm::mat4 model(1);
@@ -148,6 +147,8 @@ void render()
 
 		glBindVertexArray(lampVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		
 
 		t1.bind();
 		t2.bind();
@@ -193,6 +194,7 @@ void render()
 		glBindVertexArray(cubeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
+
 		model = glm::translate(model, glm::vec3(1.5, 1.5, 1.5));
 		cubeShader.setUniform("model", model);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -222,7 +224,8 @@ void render()
 			glDrawArrays(GL_TRIANGLES, 0, 36);
 		}
 		*/
-		
+
+		env_map.draw(camera.GetViewMatrix(), projection);
 
 		w.update();
 		blendAmount+=0.01;

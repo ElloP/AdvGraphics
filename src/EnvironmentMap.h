@@ -3,6 +3,7 @@
 
 #include "glm/glm.hpp"
 #include "Shader.h"
+#include "root.h"
 
 class EnvironmentMap 
 {
@@ -14,6 +15,7 @@ public:
 	void draw(const glm::mat4 &view, const glm::mat4 &projection);
 private:
 	unsigned int id;
+	unsigned int vao, vbo;
 	Shader shader;
 };
 #endif //ENVIRONMENT_MAP_H!!!!!
