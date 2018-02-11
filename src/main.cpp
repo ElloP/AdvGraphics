@@ -8,6 +8,9 @@
 #include "EnvironmentMap.h"
 #include "root.h"
 #include "Light.h"
+#include "FullScreenQuad.h"
+
+//#define STENCIL_ON
 
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
@@ -35,10 +38,18 @@ std::string lightvsPath = (root + "src/Shaders/light.vs");
 std::string lightfsPath = (root + "src/Shaders/light.fs");
 std::string lampvsPath = (root + "src/Shaders/lamp.vs");
 std::string lampfsPath = (root + "src/Shaders/lamp.fs");
+std::string outlinefsPath = (root + "src/Shaders/outline.fs");
+std::string outlinevsPath = (root + "src/Shaders/outline.vs");
+std::string blackfsPath = (root + "src/Shaders/black.fs");
+std::string blackvsPath = (root + "src/Shaders/black.vs");
+
+
 
 // texture paths
 std::string texture1path = (root + "src/container2.png");
 std::string texture2path = (root + "src/container2_specular.png");
+std::string texturePebble = (root + "src/Textures/Pebbles_004_COLOR.jpg");
+std::string texturePebbleNormal = (root + "src/Textures/Pebbles_004_NRM.jpg");
 
 void render()
 {
@@ -56,11 +67,15 @@ void render()
 	m.tutorial();
 	Shader cubeShader(lightvsPath.c_str(), lightfsPath.c_str());
 	Shader lampShader(lampvsPath.c_str(), lampfsPath.c_str());
+	Shader outlineShader(outlinevsPath.c_str(),outlinefsPath.c_str());
+	Shader blackShader(blackvsPath.c_str(), blackfsPath.c_str());
+	
 	Texture t1(texture1path.c_str());
-
 	t1.id = 0;
 	Texture t2(texture2path.c_str());
 	t2.id = 1;
+	Texture t3(texturePebbleNormal.c_str());
+	t3.id = 2;
 
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f,0.0f,0.0f),
@@ -86,6 +101,8 @@ void render()
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*) (6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
 
+
+
 	// light
 	glGenVertexArrays(1, &lampVAO);
 	glBindVertexArray(lampVAO);
@@ -94,7 +111,11 @@ void render()
 	glEnableVertexAttribArray(0);
 
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
+
+#ifdef STENCIL_ON
+	glEnable(GL_STENCIL_TEST);
+#endif
 	
 	float blendAmount = 0;
 
@@ -130,7 +151,19 @@ void render()
 		processInput(w.getWindow());
 
 		glClearColor(0.0, 0.2, 0.3, 1.0);
+#ifdef STENCIL_ON
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilMask(0xFF);
+#else
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#endif
+		
+		//RAY MARCHING 
+		//blackShader.use();
+		//FullscreenQuad::drawFullscreenQuad();
+
 
 		// set lamp
 		lampShader.use();
@@ -152,6 +185,7 @@ void render()
 
 		t1.bind();
 		t2.bind();
+		t3.bind();
 		// set cube
 		cubeShader.use();
 		cubeShader.setUniform("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
@@ -225,8 +259,35 @@ void render()
 		}
 		*/
 
-		env_map.draw(camera.GetViewMatrix(), projection);
+#ifdef STENCIL_ON
+		glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+		glStencilMask(0x00);
+		glDisable(GL_DEPTH_TEST);
+	
+		//draw upscaled objects
+		outlineShader.use();
+		outlineShader.setUniform("view", camera.GetViewMatrix());
+		projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+		outlineShader.setUniform("projection", projection);
 
+		model = glm::mat4(1);
+		model = glm::scale(model, glm::vec3(3.3f, 3.3f, 3.3f));
+		outlineShader.setUniform("model", model);
+
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		model = glm::mat4(1);
+		model = glm::scale(model, glm::vec3(3.0f, 3.0f, 3.0f));
+		model = glm::translate(model, glm::vec3(1.5, 1.5, 1.5));
+		model = glm::scale(model, glm::vec3(1.1f, 1.1f, 1.1f));
+		cubeShader.setUniform("model", model);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		glStencilMask(0xFF);
+		glEnable(GL_DEPTH_TEST);
+#endif
+
+		//env_map.draw(camera.GetViewMatrix(), projection);
 		w.update();
 		blendAmount+=0.01;
 		rot+=0.1;
