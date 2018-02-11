@@ -204,18 +204,18 @@ void render()
 		processInput(w.getWindow());
 
 		// set particles
-		float time = 0.2f;
+		float time = 0.1f;
 		if (counter > time) {
 			counter -= time;
-			for (int i = 0; i < 1; i++) {
+			for (int i = 0; i < 10; i++) {
 				const float theta = uniform_randf(0.f, 2.f * M_PI);
-				const float u = uniform_randf(0.95f, 1.f);
+				const float u = uniform_randf(-1.0f, 1.f);
 				glm::vec3 pos = glm::vec3(sqrt(1.f - u * u) * cosf(theta), u, sqrt(1.f - u * u) * sinf(theta));
 
 				Particle particle;
 				particle.velocity = pos * 1.0f;
 				particle.pos = pos * 1.0f;
-				particle.life_length = 2;
+				particle.life_length = 3;
 				particle.lifetime = 0;
 				hazeParticleSystem.spawn(particle);
 				
