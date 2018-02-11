@@ -11,5 +11,5 @@ in vec3 texCoords;
 #define PI 3.14159265359
 void main()
 {
-	FragColor = vec4(texture(mapTexture, texCoords));
+	FragColor = texture(mapTexture, texCoords);
 }

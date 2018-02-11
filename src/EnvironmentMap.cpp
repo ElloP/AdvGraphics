@@ -94,7 +94,7 @@ EnvironmentMap::EnvironmentMap(char *faceX, char *facenegX, char *faceY, char *f
 
 void EnvironmentMap::bind()
 {
-	glActiveTexture(GL_TEXTURE6);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
 	
 }
@@ -104,15 +104,31 @@ void EnvironmentMap::unbind()
 }
 void EnvironmentMap::draw(const glm::mat4 &view, const glm::mat4 &projection)
 {
+	/*
+	shader.use();
+	shader.setUniform("view", glm::mat4(glm::mat3(view)));
+	shader.setUniform("projection", glm::mat4(projection));
+	
+	glDepthMask(GL_FALSE);
+	// ... set view and projection matrix
 
+	glBindVertexArray(vao);
+	bind();
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+	glDepthMask(GL_TRUE);
+	glBindVertexArray(0);
+	unbind();
+	*/
+
+	
 	glDepthFunc(GL_LEQUAL);  // change depth function so depth test passes when values are equal to depth buffer's content
 	shader.use(); 
 	shader.setUniform("view", glm::mat4(glm::mat3(view)));
 	shader.setUniform("projection", glm::mat4(projection));
 	glBindVertexArray(vao);
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, id);
+	bind();
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 	glBindVertexArray(0);
 	glDepthFunc(GL_LESS); // set depth function back to default
+	unbind();
 }
