@@ -61,6 +61,12 @@ Shader lampShader;
 Shader particleShader;
 Shader hazeShader;
 
+//light
+glm::vec3 lightPos;
+PointLight pointLight;
+Light dirLight;
+float rotation;
+
 // VBO VAO
 unsigned int VBO, cubeVAO, lampVAO;
 
@@ -77,7 +83,7 @@ Material m;
 
 
 // Methods
-void drawScene(glm::vec3 lightPos, PointLight pointLight, Light dirLight, float rotation);
+void drawScene(glm::mat4 view, glm::mat4 projection);
 float uniform_randf(const float from, const float to);
 float randf();
 
@@ -188,6 +194,7 @@ void render()
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 		
+		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
 
 		processInput(w.getWindow());
 
@@ -205,8 +212,18 @@ void render()
 			particleSystem.spawn(particle);
 		}
 
-		drawScene(lightPos, pointLight, dirLight, rot);
-		
+		//Do frame buffer
+		FboInfo &postProcessFbo = fboList[1];
+		glBindFramebuffer(GL_FRAMEBUFFER, postProcessFbo.framebufferId); // to be replaced with another framebuffer when doing post processing
+
+		glViewport(0, 0, WIDTH, HEIGHT);
+		glClearColor(0.2, 0.2, 0.8, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		drawScene(camera.GetViewMatrix(), projection);
+
+		//Post process
+
 
 		// update
 		w.update();
@@ -215,11 +232,11 @@ void render()
 	}
 }
 
-void drawScene(glm::vec3 lightPos, PointLight pointLight, Light dirLight, float rotation) {
+void drawScene(glm::mat4 view, glm::mat4 projection) {
 	glClearColor(0.0, 0.2, 0.3, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+	
 
 	// set lamp
 	lampShader.use();
@@ -228,8 +245,7 @@ void drawScene(glm::vec3 lightPos, PointLight pointLight, Light dirLight, float 
 	model = glm::translate(model, lightPos);
 	model = glm::scale(model, glm::vec3(0.2f));
 	lampShader.setUniform("model", model);
-	lampShader.setUniform("view", camera.GetViewMatrix());
-	projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+	lampShader.setUniform("view", view);
 	lampShader.setUniform("projection", projection);
 
 	glBindVertexArray(lampVAO);
@@ -244,8 +260,7 @@ void drawScene(glm::vec3 lightPos, PointLight pointLight, Light dirLight, float 
 	model = glm::mat4(1);
 	model = glm::scale(model, glm::vec3(3.0f, 3.0f, 3.0f));
 	cubeShader.setUniform("model", model);
-	cubeShader.setUniform("view", camera.GetViewMatrix());
-	projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+	cubeShader.setUniform("view", view);
 	cubeShader.setUniform("projection", projection);
 	cubeShader.setUniform("viewPos", camera.Position);
 
@@ -283,7 +298,7 @@ void drawScene(glm::vec3 lightPos, PointLight pointLight, Light dirLight, float 
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
 	// set environment map
-	env_map.draw(camera.GetViewMatrix(), projection);
+	env_map.draw(view, projection);
 
 
 	// set particles
