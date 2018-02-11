@@ -33,8 +33,8 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-// particles
-
+// framebuffers
+std::vector<FboInfo> fboList;
 
 // I HAVE NO IDEA WHY THESE NEEDS TO BE STRINGS, AND THEN c_str() and not simply const char* lightvsPath = (root + "src/Shaders/light.vs").c_str();
 // shaders paths
@@ -91,6 +91,11 @@ void render()
 		glm::vec3(0.0f,0.0f,0.0f),
 		glm::vec3(7.0f,5.0f,0.0f)
 	};
+
+	// Setting up framebuffers
+	const int numFbos = 5;
+	for (int i = 0; i < numFbos; i++)
+		fboList.push_back(FboInfo(WIDTH, HEIGHT));
 
 	// Setting up particle galaxy with particle systems
 	ParticleGalaxy particleGalaxy;
