@@ -7,6 +7,11 @@ Texture::Texture(const char* path)
 	initTexture(path);
 }
 
+Texture::Texture(const char* path, unsigned int _id) : id(_id)
+{
+	initTexture(path);
+}
+
 void Texture::bind()
 {
 	glActiveTexture(GL_TEXTURE0 + id);

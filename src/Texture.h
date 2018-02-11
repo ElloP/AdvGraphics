@@ -7,7 +7,9 @@ class Texture
 public:
 	unsigned char id;
 
+	explicit Texture() {};
 	Texture(const char* path);
+	Texture(const char* path, unsigned int _id);
 
 	void bind();
 	void unbind();

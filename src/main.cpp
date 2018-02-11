@@ -36,6 +36,9 @@ float lastFrame = 0.0f;
 // framebuffers
 std::vector<FboInfo> fboList;
 
+// particles
+ParticleGalaxy particleGalaxy;
+
 // I HAVE NO IDEA WHY THESE NEEDS TO BE STRINGS, AND THEN c_str() and not simply const char* lightvsPath = (root + "src/Shaders/light.vs").c_str();
 // shaders paths
 std::string lightvsPath = (root + "src/Shaders/light.vs");
@@ -50,8 +53,33 @@ std::string hazefsPath = (root + "src/Shaders/haze.fs");
 // texture paths
 std::string texture1path = (root + "src/container2.png");
 std::string texture2path = (root + "src/container2_specular.png");
-
 std::string particlePath = (root + "src/explosion.png");
+
+// shaders
+Shader cubeShader;
+Shader lampShader;
+Shader particleShader;
+Shader hazeShader;
+
+// VBO VAO
+unsigned int VBO, cubeVAO, lampVAO;
+
+// Env map
+EnvironmentMap env_map;
+
+// Textures
+Texture t1;
+Texture t2;
+Texture t3;
+
+// Material
+Material m;
+
+
+// Methods
+void drawScene(glm::vec3 lightPos, PointLight pointLight, Light dirLight, float rotation);
+float uniform_randf(const float from, const float to);
+float randf();
 
 float uniform_randf(const float from, const float to) {
 	return from + (to - from) * float(rand()) / float(RAND_MAX);
@@ -71,21 +99,29 @@ void render()
 	// tell GLFW to capture our mouse
 	glfwSetInputMode(w.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	Material m;
+	// setting up shaders
+	cubeShader = Shader(lightvsPath.c_str(), lightfsPath.c_str());
+	lampShader = Shader(lampvsPath.c_str(), lampfsPath.c_str());
+	particleShader = Shader(particlevsPath.c_str(), particlefsPath.c_str());
+	hazeShader = Shader(hazevsPath.c_str(), hazefsPath.c_str());
+	
+	// setting up environment map
+	env_map = EnvironmentMap(
+		&(root + "src/Cubemap/posx.jpg")[0u],
+		&(root + "src/Cubemap/negx.jpg")[0u],
+		&(root + "src/Cubemap/posy.jpg")[0u],
+		&(root + "src/Cubemap/negy.jpg")[0u],
+		&(root + "src/Cubemap/posz.jpg")[0u],
+		&(root + "src/Cubemap/negz.jpg")[0u]
+	);
+
+	// setting up textures
+	t1 = Texture(texture1path.c_str(), 0);
+	t2 = Texture(texture2path.c_str(), 1);
+	t3 = Texture(particlePath.c_str(), 0);
+
+
 	m.tutorial();
-	Shader cubeShader(lightvsPath.c_str(), lightfsPath.c_str());
-	Shader lampShader(lampvsPath.c_str(), lampfsPath.c_str());
-	Shader particleShader(particlevsPath.c_str(), particlefsPath.c_str());
-	Shader hazeShader(hazevsPath.c_str(), hazefsPath.c_str());
-
-	Texture t1(texture1path.c_str());
-	t1.id = 0;
-
-	Texture t2(texture2path.c_str());
-	t2.id = 1;
-
-	Texture t3(particlePath.c_str());
-	t3.id = 0;
 
 	glm::vec3 cubePositions[] = {
 		glm::vec3(0.0f,0.0f,0.0f),
@@ -98,12 +134,12 @@ void render()
 		fboList.push_back(FboInfo(WIDTH, HEIGHT));
 
 	// Setting up particle galaxy with particle systems
-	ParticleGalaxy particleGalaxy;
+
 	ParticleSystem particleSystem(100, &particleShader, &t3); //testsystem
 
 	particleGalaxy.add(&particleSystem);
 
-	unsigned int VBO, cubeVAO, lampVAO;
+	
 	glGenVertexArrays(1, &cubeVAO);
 	glGenBuffers(1, &VBO);
 
@@ -134,16 +170,6 @@ void render()
 	
 	float blendAmount = 0;
 
-	
-	EnvironmentMap env_map(
-		&(root + "src/Cubemap/posx.jpg")[0u],
-		&(root + "src/Cubemap/negx.jpg")[0u],
-		&(root + "src/Cubemap/posy.jpg")[0u],
-		&(root + "src/Cubemap/negy.jpg")[0u],
-		&(root + "src/Cubemap/posz.jpg")[0u],
-		&(root + "src/Cubemap/negz.jpg")[0u]
-	);
-
 	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 	Light dirLight;
@@ -165,75 +191,6 @@ void render()
 
 		processInput(w.getWindow());
 
-		glClearColor(0.0, 0.2, 0.3, 1.0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
-		
-		// set lamp
-		lampShader.use();
-		glm::mat4 model(1);
-		lightPos = glm::mat3(glm::rotate(glm::mat4(1), glm::radians(0.10f), glm::vec3(0.0f, 1.0f, 0.0f))) * lightPos;
-		model = glm::translate(model, lightPos);
-		model = glm::scale(model, glm::vec3(0.2f));
-		lampShader.setUniform("model", model);
-		lampShader.setUniform("view", camera.GetViewMatrix());
-		projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
-		lampShader.setUniform("projection", projection);
-
-		glBindVertexArray(lampVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-
-		t1.bind();
-		t2.bind();
-		// set cube
-		cubeShader.use();
-		cubeShader.setUniform("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
-		cubeShader.setUniform("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
-		model = glm::mat4(1);
-		model = glm::scale(model, glm::vec3(3.0f, 3.0f, 3.0f));
-		cubeShader.setUniform("model", model);
-		cubeShader.setUniform("view", camera.GetViewMatrix());
-		projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
-		cubeShader.setUniform("projection", projection);
-		cubeShader.setUniform("viewPos", camera.Position);
-		
-		cubeShader.setUniform("material.shininess", m.shininess);
-
-		pointLight.light.position = lightPos;
-
-		cubeShader.setUniform("dirLight.direction", glm::vec3(-0.2f,-1.0f,-0.3f));//dirLight.position);
-		cubeShader.setUniform("dirLight.ambient", dirLight.ambient);
-		cubeShader.setUniform("dirLight.diffuse", dirLight.diffuse);
-		cubeShader.setUniform("dirLight.specular", dirLight.specular);
-
-		cubeShader.setUniform("pointLight.position", pointLight.light.position);
-		cubeShader.setUniform("pointLight.ambient", pointLight.light.ambient);
-		cubeShader.setUniform("pointLight.diffuse", pointLight.light.diffuse);
-		cubeShader.setUniform("pointLight.specular", pointLight.light.specular);
-		cubeShader.setUniform("pointLight.constant", pointLight.constant);
-		cubeShader.setUniform("pointLight.linear", pointLight.linear);
-		cubeShader.setUniform("pointLight.quadratic", pointLight.quadratic);
-		
-
-		cubeShader.setUniform("spotLight.position", camera.Position);
-		cubeShader.setUniform("spotLight.direction", camera.Front);
-		cubeShader.setUniform("spotLight.cutoff", glm::cos(glm::radians(10.0f)));
-		cubeShader.setUniform("spotLight.outerCutoff", glm::cos(glm::radians(13.5f)));
-		cubeShader.setUniform("spotLight.ambient", glm::vec3(.1f));
-		cubeShader.setUniform("spotLight.diffuse", glm::vec3(.8f));
-		cubeShader.setUniform("spotLight.specular", glm::vec3(1.0f));
-
-		glBindVertexArray(cubeVAO);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-
-		model = glm::translate(model, glm::vec3(1.5, 1.5, 1.5));
-		cubeShader.setUniform("model", model);
-		glDrawArrays(GL_TRIANGLES, 0, 36);
-
-		// set environment map
-		env_map.draw(camera.GetViewMatrix(), projection);
-
 		// set particles
 		for (int i = 0; i < 10; i++) {
 			const float theta = uniform_randf(0.f, 2.f * M_PI);
@@ -248,19 +205,94 @@ void render()
 			particleSystem.spawn(particle);
 		}
 
-		particleShader.use();
-		particleShader.setUniform("P", projection);
-		particleShader.setUniform("screen_x", float(WIDTH));
-		particleShader.setUniform("screen_y", float(HEIGHT));
-
-		particleSystem.process_particles(deltaTime);
-		particleSystem.draw(camera.GetViewMatrix());
+		drawScene(lightPos, pointLight, dirLight, rot);
+		
 
 		// update
 		w.update();
 		blendAmount+=0.01;
-		rot+=0.1;
+		rot+=deltaTime * 2 * M_PI * 10;
 	}
+}
+
+void drawScene(glm::vec3 lightPos, PointLight pointLight, Light dirLight, float rotation) {
+	glClearColor(0.0, 0.2, 0.3, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+
+	// set lamp
+	lampShader.use();
+	glm::mat4 model(1);
+	lightPos = glm::mat3(glm::rotate(glm::mat4(1), glm::radians(rotation), glm::vec3(0.0f, 1.0f, 0.0f))) * lightPos;
+	model = glm::translate(model, lightPos);
+	model = glm::scale(model, glm::vec3(0.2f));
+	lampShader.setUniform("model", model);
+	lampShader.setUniform("view", camera.GetViewMatrix());
+	projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+	lampShader.setUniform("projection", projection);
+
+	glBindVertexArray(lampVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	t1.bind();
+	t2.bind();
+	// set cube
+	cubeShader.use();
+	cubeShader.setUniform("objectColor", glm::vec3(1.0f, 0.5f, 0.31f));
+	cubeShader.setUniform("lightColor", glm::vec3(1.0f, 1.0f, 1.0f));
+	model = glm::mat4(1);
+	model = glm::scale(model, glm::vec3(3.0f, 3.0f, 3.0f));
+	cubeShader.setUniform("model", model);
+	cubeShader.setUniform("view", camera.GetViewMatrix());
+	projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+	cubeShader.setUniform("projection", projection);
+	cubeShader.setUniform("viewPos", camera.Position);
+
+	cubeShader.setUniform("material.shininess", m.shininess);
+
+	pointLight.light.position = lightPos;
+
+	cubeShader.setUniform("dirLight.direction", glm::vec3(-0.2f, -1.0f, -0.3f));//dirLight.position);
+	cubeShader.setUniform("dirLight.ambient", dirLight.ambient);
+	cubeShader.setUniform("dirLight.diffuse", dirLight.diffuse);
+	cubeShader.setUniform("dirLight.specular", dirLight.specular);
+
+	cubeShader.setUniform("pointLight.position", pointLight.light.position);
+	cubeShader.setUniform("pointLight.ambient", pointLight.light.ambient);
+	cubeShader.setUniform("pointLight.diffuse", pointLight.light.diffuse);
+	cubeShader.setUniform("pointLight.specular", pointLight.light.specular);
+	cubeShader.setUniform("pointLight.constant", pointLight.constant);
+	cubeShader.setUniform("pointLight.linear", pointLight.linear);
+	cubeShader.setUniform("pointLight.quadratic", pointLight.quadratic);
+
+
+	cubeShader.setUniform("spotLight.position", camera.Position);
+	cubeShader.setUniform("spotLight.direction", camera.Front);
+	cubeShader.setUniform("spotLight.cutoff", glm::cos(glm::radians(10.0f)));
+	cubeShader.setUniform("spotLight.outerCutoff", glm::cos(glm::radians(13.5f)));
+	cubeShader.setUniform("spotLight.ambient", glm::vec3(.1f));
+	cubeShader.setUniform("spotLight.diffuse", glm::vec3(.8f));
+	cubeShader.setUniform("spotLight.specular", glm::vec3(1.0f));
+
+	glBindVertexArray(cubeVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	model = glm::translate(model, glm::vec3(1.5, 1.5, 1.5));
+	cubeShader.setUniform("model", model);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	// set environment map
+	env_map.draw(camera.GetViewMatrix(), projection);
+
+
+	// set particles
+	particleShader.use();
+	particleShader.setUniform("P", projection);
+	particleShader.setUniform("screen_x", float(WIDTH));
+	particleShader.setUniform("screen_y", float(HEIGHT));
+
+	particleGalaxy.draw(camera.GetViewMatrix(), deltaTime);
 }
 
 // glfw: whenever the mouse moves, this callback is called

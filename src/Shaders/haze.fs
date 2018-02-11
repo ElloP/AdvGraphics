@@ -2,6 +2,9 @@
 in float life;
 uniform float screen_x;
 uniform float screen_y;
+
+
+
 layout(binding = 0) uniform sampler2D colortexture;
 
 void main()

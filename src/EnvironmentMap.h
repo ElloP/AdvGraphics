@@ -8,6 +8,7 @@
 class EnvironmentMap 
 {
 public:
+	explicit EnvironmentMap() {};
 	EnvironmentMap(char *faces[6]);
 	EnvironmentMap(char *faceX, char *facenegX, char *faceY, char *facenegY, char *faceZ, char *facenegZ);
 	void bind();
