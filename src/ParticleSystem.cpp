@@ -27,14 +27,13 @@ void ParticleSystem::process_particles(float dt) {
 }
 
 void ParticleSystem::draw(glm::mat4 view) {
-	texture->id = 0;
 	texture->bind();
 	shader->use();
 
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	unsigned int active_particles = particles.size();
 

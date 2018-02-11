@@ -71,9 +71,9 @@ EnvironmentMap::EnvironmentMap(char *faceX, char *facenegX, char *faceY, char *f
 	data = stbi_load(facenegX, &width, &height, &nrChannels, 0);
 	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_X, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	data = stbi_load(faceY, &width, &height, &nrChannels, 0);
-	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	data = stbi_load(facenegY, &width, &height, &nrChannels, 0);
 	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Y, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+	data = stbi_load(facenegY, &width, &height, &nrChannels, 0);
+	glTexImage2D(GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	data = stbi_load(faceZ, &width, &height, &nrChannels, 0);
 	glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_Z, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	data = stbi_load(facenegZ, &width, &height, &nrChannels, 0);

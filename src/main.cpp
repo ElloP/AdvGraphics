@@ -10,6 +10,7 @@
 #include "Light.h"
 #include "ParticleGalaxy.h"
 #include "Fboinfo.h"
+#include "FullScreenQuad.h"
 
 #ifndef M_PI
 #	define M_PI 3.14159265358979323846f
@@ -49,6 +50,8 @@ std::string particlevsPath = (root + "src/Shaders/particle.vs");
 std::string particlefsPath = (root + "src/Shaders/particle.fs");
 std::string hazevsPath = (root + "src/Shaders/haze.vs");
 std::string hazefsPath = (root + "src/Shaders/haze.fs");
+std::string postvsPath = (root + "src/Shaders/postprocess.vs");
+std::string postfsPath = (root + "src/Shaders/postprocess.fs");
 
 // texture paths
 std::string texture1path = (root + "src/container2.png");
@@ -60,6 +63,7 @@ Shader cubeShader;
 Shader lampShader;
 Shader particleShader;
 Shader hazeShader;
+Shader postShader;
 
 //light
 glm::vec3 lightPos;
@@ -108,8 +112,9 @@ void render()
 	// setting up shaders
 	cubeShader = Shader(lightvsPath.c_str(), lightfsPath.c_str());
 	lampShader = Shader(lampvsPath.c_str(), lampfsPath.c_str());
-	particleShader = Shader(particlevsPath.c_str(), particlefsPath.c_str());
+	//particleShader = Shader(particlevsPath.c_str(), particlefsPath.c_str());
 	hazeShader = Shader(hazevsPath.c_str(), hazefsPath.c_str());
+	postShader = Shader(postvsPath.c_str(), postfsPath.c_str());
 	
 	// setting up environment map
 	env_map = EnvironmentMap(
@@ -141,9 +146,10 @@ void render()
 
 	// Setting up particle galaxy with particle systems
 
-	ParticleSystem particleSystem(100, &particleShader, &t3); //testsystem
+	//ParticleSystem particleSystem(100, &particleShader, &t3); //testsystem
+	ParticleSystem hazeParticleSystem(1000, &hazeShader, &t3); //testsystem
 
-	particleGalaxy.add(&particleSystem);
+	//particleGalaxy.add(&particleSystem);
 
 	
 	glGenVertexArrays(1, &cubeVAO);
@@ -176,15 +182,14 @@ void render()
 	
 	float blendAmount = 0;
 
-	glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-
-	Light dirLight;
+	lightPos = glm::vec3(1.2f, 1.0f, 2.0f);
 	dirLight.tutorial(lightPos);
-	PointLight pointLight;
 	pointLight.light = dirLight;
 	pointLight.constant = 1.0f;
 	pointLight.linear = 0.09f;
 	pointLight.quadratic = 0.032f;
+
+	float counter = 0;
 
 	while(!w.windowShouldClose())
 	{
@@ -199,44 +204,77 @@ void render()
 		processInput(w.getWindow());
 
 		// set particles
-		for (int i = 0; i < 10; i++) {
-			const float theta = uniform_randf(0.f, 2.f * M_PI);
-			const float u = uniform_randf(-1.f, 1.f);
-			glm::vec3 pos = glm::vec3(sqrt(1.f - u * u) * cosf(theta), u, sqrt(1.f - u * u) * sinf(theta));
+		float time = 0.2f;
+		if (counter > time) {
+			counter -= time;
+			for (int i = 0; i < 1; i++) {
+				const float theta = uniform_randf(0.f, 2.f * M_PI);
+				const float u = uniform_randf(0.95f, 1.f);
+				glm::vec3 pos = glm::vec3(sqrt(1.f - u * u) * cosf(theta), u, sqrt(1.f - u * u) * sinf(theta));
 
-			Particle particle;
-			particle.velocity = pos * 2.0f;
-			particle.pos = pos * 2.0f;
-			particle.life_length = 5;
-			particle.lifetime = 0;
-			particleSystem.spawn(particle);
+				Particle particle;
+				particle.velocity = pos * 1.0f;
+				particle.pos = pos * 1.0f;
+				particle.life_length = 2;
+				particle.lifetime = 0;
+				hazeParticleSystem.spawn(particle);
+				
+			}
 		}
 
+		counter += deltaTime;
+		
 		//Do frame buffer
-		FboInfo &postProcessFbo = fboList[1];
+		FboInfo &postProcessFbo = fboList[0];
 		glBindFramebuffer(GL_FRAMEBUFFER, postProcessFbo.framebufferId); // to be replaced with another framebuffer when doing post processing
 
 		glViewport(0, 0, WIDTH, HEIGHT);
-		glClearColor(0.2, 0.2, 0.8, 1.0);
+		glClearColor(0.0, 0.2, 0.3, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		drawScene(camera.GetViewMatrix(), projection);
 
+		FboInfo &hazeProcessFbo = fboList[1];
+		glBindFramebuffer(GL_FRAMEBUFFER, hazeProcessFbo.framebufferId); // to be replaced with another framebuffer when doing post processing
+
+		glViewport(0, 0, WIDTH, HEIGHT);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// set particles
+		hazeShader.use();
+		hazeShader.setUniform("P", projection);
+		hazeShader.setUniform("screen_x", float(WIDTH));
+		hazeShader.setUniform("screen_y", float(HEIGHT));
+
+		hazeParticleSystem.process_particles(deltaTime);
+		hazeParticleSystem.draw(camera.GetViewMatrix());
+
+
 		//Post process
 
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		postShader.use();
+		postShader.setUniform("time", float(glfwGetTime()));
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, postProcessFbo.colorTextureTarget);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, hazeProcessFbo.colorTextureTarget);
+
+		FullscreenQuad quad;
+		quad.drawFullscreenQuad();
 
 		// update
 		w.update();
 		blendAmount+=0.01;
-		rot+=deltaTime * 2 * M_PI * 10;
+		rotation =deltaTime * 2 * M_PI * 10;
 	}
 }
 
 void drawScene(glm::mat4 view, glm::mat4 projection) {
-	glClearColor(0.0, 0.2, 0.3, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-	
 
 	// set lamp
 	lampShader.use();
