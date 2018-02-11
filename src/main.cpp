@@ -9,6 +9,7 @@
 #include "root.h"
 #include "Light.h"
 #include "ParticleGalaxy.h"
+#include "Fboinfo.h"
 
 #ifndef M_PI
 #	define M_PI 3.14159265358979323846f
@@ -76,6 +77,7 @@ void render()
 	Shader lampShader(lampvsPath.c_str(), lampfsPath.c_str());
 	Shader particleShader(particlevsPath.c_str(), particlefsPath.c_str());
 	Shader hazeShader(hazevsPath.c_str(), hazefsPath.c_str());
+
 	Texture t1(texture1path.c_str());
 	t1.id = 0;
 
