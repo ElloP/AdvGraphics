@@ -11,6 +11,9 @@
 #include "ParticleGalaxy.h"
 #include "Fboinfo.h"
 #include "FullScreenQuad.h"
+#include "FullScreenQuad.h"
+
+//#define STENCIL_ON
 
 #ifndef M_PI
 #	define M_PI 3.14159265358979323846f
@@ -46,6 +49,10 @@ std::string lightvsPath = (root + "src/Shaders/light.vs");
 std::string lightfsPath = (root + "src/Shaders/light.fs");
 std::string lampvsPath = (root + "src/Shaders/lamp.vs");
 std::string lampfsPath = (root + "src/Shaders/lamp.fs");
+std::string outlinefsPath = (root + "src/Shaders/outline.fs");
+std::string outlinevsPath = (root + "src/Shaders/outline.vs");
+std::string blackfsPath = (root + "src/Shaders/black.fs");
+std::string blackvsPath = (root + "src/Shaders/black.vs");
 std::string particlevsPath = (root + "src/Shaders/particle.vs");
 std::string particlefsPath = (root + "src/Shaders/particle.fs");
 std::string hazevsPath = (root + "src/Shaders/haze.vs");
@@ -53,9 +60,13 @@ std::string hazefsPath = (root + "src/Shaders/haze.fs");
 std::string postvsPath = (root + "src/Shaders/postprocess.vs");
 std::string postfsPath = (root + "src/Shaders/postprocess.fs");
 
+
+
 // texture paths
 std::string texture1path = (root + "src/container2.png");
 std::string texture2path = (root + "src/container2_specular.png");
+std::string texturePebble = (root + "src/Textures/Pebbles_004_COLOR.jpg");
+std::string texturePebbleNormal = (root + "src/Textures/Pebbles_004_NRM.jpg");
 std::string particlePath = (root + "src/explosion.png");
 
 // shaders
@@ -64,6 +75,8 @@ Shader lampShader;
 Shader particleShader;
 Shader hazeShader;
 Shader postShader;
+Shader blackShader;
+Shader outlineShader;
 
 //light
 glm::vec3 lightPos;
@@ -81,6 +94,7 @@ EnvironmentMap env_map;
 Texture t1;
 Texture t2;
 Texture t3;
+Texture t4;
 
 // Material
 Material m;
@@ -115,6 +129,8 @@ void render()
 	//particleShader = Shader(particlevsPath.c_str(), particlefsPath.c_str());
 	hazeShader = Shader(hazevsPath.c_str(), hazefsPath.c_str());
 	postShader = Shader(postvsPath.c_str(), postfsPath.c_str());
+	outlineShader = Shader(outlinevsPath.c_str(), outlinefsPath.c_str());
+	blackShader = Shader(blackvsPath.c_str(), blackfsPath.c_str());
 	
 	// setting up environment map
 	env_map = EnvironmentMap(
@@ -127,10 +143,10 @@ void render()
 	);
 
 	// setting up textures
-	t1 = Texture(texture1path.c_str(), 0);
+	t1 = Texture(texturePebble.c_str(), 0);
 	t2 = Texture(texture2path.c_str(), 1);
 	t3 = Texture(particlePath.c_str(), 0);
-
+	t4 = Texture(texturePebbleNormal.c_str(), 2);
 
 	m.tutorial();
 
@@ -178,7 +194,11 @@ void render()
 	glEnableVertexAttribArray(0);
 
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
+	//glDisable(GL_CULL_FACE);
+
+#ifdef STENCIL_ON
+	glEnable(GL_STENCIL_TEST);
+#endif
 	
 	float blendAmount = 0;
 
@@ -211,22 +231,35 @@ void render()
 				const float theta = uniform_randf(0.f, 2.f * M_PI);
 				const float u = uniform_randf(-1.0f, 1.f);
 				glm::vec3 pos = glm::vec3(sqrt(1.f - u * u) * cosf(theta), u, sqrt(1.f - u * u) * sinf(theta));
-
 				Particle particle;
 				particle.velocity = pos * 1.0f;
 				particle.pos = pos * 1.0f;
 				particle.life_length = 3;
 				particle.lifetime = 0;
 				hazeParticleSystem.spawn(particle);
-				
 			}
 		}
+
+
+		glClearColor(0.0, 0.2, 0.3, 1.0);
+#ifdef STENCIL_ON
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+		glStencilFunc(GL_ALWAYS, 1, 0xFF);
+		glStencilMask(0xFF);
+#else
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+#endif
+		
+		//RAY MARCHING 
+		//blackShader.use();
+		//FullscreenQuad::drawFullscreenQuad();
 
 		counter += deltaTime;
 		
 		//Do frame buffer
 		FboInfo &postProcessFbo = fboList[0];
-		glBindFramebuffer(GL_FRAMEBUFFER, postProcessFbo.framebufferId); // to be replaced with another framebuffer when doing post processing
+		glBindFramebuffer(GL_FRAMEBUFFER, postProcessFbo.framebufferId); 
 
 		glViewport(0, 0, WIDTH, HEIGHT);
 		glClearColor(0.0, 0.2, 0.3, 1.0);
@@ -235,7 +268,7 @@ void render()
 		drawScene(camera.GetViewMatrix(), projection);
 
 		FboInfo &hazeProcessFbo = fboList[1];
-		glBindFramebuffer(GL_FRAMEBUFFER, hazeProcessFbo.framebufferId); // to be replaced with another framebuffer when doing post processing
+		glBindFramebuffer(GL_FRAMEBUFFER, hazeProcessFbo.framebufferId); 
 
 		glViewport(0, 0, WIDTH, HEIGHT);
 		glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -252,7 +285,6 @@ void render()
 
 
 		//Post process
-
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		postShader.use();
@@ -267,7 +299,7 @@ void render()
 		FullscreenQuad quad;
 		quad.drawFullscreenQuad();
 
-		// update
+		//env_map.draw(camera.GetViewMatrix(), projection);
 		w.update();
 		blendAmount+=0.01;
 		rotation =deltaTime * 2 * M_PI * 10;
@@ -275,6 +307,8 @@ void render()
 }
 
 void drawScene(glm::mat4 view, glm::mat4 projection) {
+
+	glEnable(GL_STENCIL_TEST);
 
 	// set lamp
 	lampShader.use();
@@ -284,11 +318,15 @@ void drawScene(glm::mat4 view, glm::mat4 projection) {
 	model = glm::scale(model, glm::vec3(0.2f));
 	lampShader.setUniform("model", model);
 	lampShader.setUniform("view", view);
-	lampShader.setUniform("projection", projection);
-
+	lampShader.setUniform("projection", projection);	
+	
 	glBindVertexArray(lampVAO);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
 
+
+
+
+	t4.bind();
 	t1.bind();
 	t2.bind();
 	// set cube
@@ -334,6 +372,34 @@ void drawScene(glm::mat4 view, glm::mat4 projection) {
 	model = glm::translate(model, glm::vec3(1.5, 1.5, 1.5));
 	cubeShader.setUniform("model", model);
 	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+#ifdef STENCIL_ON
+	glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+	glStencilMask(0x00);
+	glDisable(GL_DEPTH_TEST);
+
+	//draw upscaled objects
+	outlineShader.use();
+	outlineShader.setUniform("view", view);
+	projection = glm::perspective(glm::radians(camera.Zoom), (float)WIDTH / (float)HEIGHT, 0.1f, 100.0f);
+	outlineShader.setUniform("projection", projection);
+
+	model = glm::mat4(1);
+	model = glm::scale(model, glm::vec3(3.3f, 3.3f, 3.3f));
+	outlineShader.setUniform("model", model);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	model = glm::mat4(1);
+	model = glm::scale(model, glm::vec3(3.0f, 3.0f, 3.0f));
+	model = glm::translate(model, glm::vec3(1.5, 1.5, 1.5));
+	model = glm::scale(model, glm::vec3(1.1f, 1.1f, 1.1f));
+	cubeShader.setUniform("model", model);
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+
+	glStencilMask(0xFF);
+	glEnable(GL_DEPTH_TEST);
+#endif
 
 	// set environment map
 	env_map.draw(view, projection);

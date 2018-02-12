@@ -2,6 +2,7 @@
 
 layout (binding = 0) uniform sampler2D diffuseMap;
 layout (binding = 1) uniform sampler2D specularMap;
+layout (binding = 2) uniform sampler2D normalMap;
 
 out vec4 FragColor;
 
@@ -111,6 +112,7 @@ vec3 calcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)
 void main()
 {
 	vec3 norm = normalize(Normal);
+	//vec3 norm = normalize(vec3(texture(normalMap,TexCoords).rgb * 2 - 1));
 	vec3 viewDir = normalize(viewPos - FragPos);
 
 	vec3 result = calcDirLight(dirLight,norm,viewDir);
