@@ -11,7 +11,6 @@
 #include "ParticleGalaxy.h"
 #include "Fboinfo.h"
 #include "FullScreenQuad.h"
-#include "FullScreenQuad.h"
 
 //#define STENCIL_ON
 
