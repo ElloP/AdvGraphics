@@ -4,6 +4,7 @@ uniform mat4 P;
 uniform float screen_x;
 uniform float screen_y;
 out float life;
+out float lifetime;
 out vec2 position;
 
 void main()
@@ -25,5 +26,5 @@ void main()
 	//gl_PointSize = scale_factor * 1.0f;
 	float end = 0;
 	float start = 0.1;
-    gl_PointSize = scale_factor * mix(start, end, life/4);
+    gl_PointSize = scale_factor * mix(1, 0, life/lifetime);
 }

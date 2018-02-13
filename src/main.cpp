@@ -11,12 +11,9 @@
 #include "ParticleGalaxy.h"
 #include "Fboinfo.h"
 #include "FullScreenQuad.h"
+#include "Mathhelper.h"
 
 //#define STENCIL_ON
-
-#ifndef M_PI
-#	define M_PI 3.14159265358979323846f
-#endif 
 
 const int WIDTH = 1920;
 const int HEIGHT = 1080;
@@ -101,16 +98,6 @@ Material m;
 
 // Methods
 void drawScene(glm::mat4 view, glm::mat4 projection);
-float uniform_randf(const float from, const float to);
-float randf();
-
-float uniform_randf(const float from, const float to) {
-	return from + (to - from) * float(rand()) / float(RAND_MAX);
-}
-
-float randf() {
-	return float(rand()) / float(RAND_MAX);
-}
 
 void render()
 {
@@ -208,7 +195,7 @@ void render()
 	pointLight.linear = 0.09f;
 	pointLight.quadratic = 0.032f;
 
-	float counter = 0;
+
 
 	while(!w.windowShouldClose())
 	{
@@ -223,24 +210,7 @@ void render()
 		processInput(w.getWindow());
 
 		// set particles
-		float time = 0.1f;
-		if (counter > time) {
-			counter -= time;
-			for (int i = 0; i < 10; i++) {
-				const float theta = uniform_randf(0.f, 2.f * M_PI);
-				const float u = uniform_randf(-1.0f, 1.f);
-				glm::vec3 pos = glm::vec3(sqrt(1.f - u * u) * cosf(theta), u, sqrt(1.f - u * u) * sinf(theta));
-				Particle particle;
-				particle.velocity = pos * 1.0f;
-				particle.pos = pos * 1.0f;
-				particle.life_length = 3;
-				particle.lifetime = 0;
-				hazeParticleSystem.spawn(particle);
-			}
-		}
 
-
-		glClearColor(0.0, 0.2, 0.3, 1.0);
 #ifdef STENCIL_ON
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
@@ -253,15 +223,12 @@ void render()
 		//RAY MARCHING 
 		//blackShader.use();
 		//FullscreenQuad::drawFullscreenQuad();
-
-		counter += deltaTime;
 		
 		//Do frame buffer
 		FboInfo &postProcessFbo = fboList[0];
 		glBindFramebuffer(GL_FRAMEBUFFER, postProcessFbo.framebufferId); 
-
+		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glViewport(0, 0, WIDTH, HEIGHT);
-		glClearColor(0.0, 0.2, 0.3, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		drawScene(camera.GetViewMatrix(), projection);
@@ -279,12 +246,11 @@ void render()
 		hazeShader.setUniform("screen_x", float(WIDTH));
 		hazeShader.setUniform("screen_y", float(HEIGHT));
 
-		hazeParticleSystem.process_particles(deltaTime);
-		hazeParticleSystem.draw(camera.GetViewMatrix());
-
+		hazeParticleSystem.run(camera.GetViewMatrix(), deltaTime);
 
 		//Post process
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
 
 		postShader.use();
 		postShader.setUniform("time", float(glfwGetTime()));

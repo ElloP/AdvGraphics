@@ -26,7 +26,7 @@ void main()
         color = frame;
     }
     else {
-        color = textureRect(frameBufferTexture, gl_FragCoord.xy + sin(haze.xy));
+        color = textureRect(frameBufferTexture, gl_FragCoord.xy + sin(time * haze.xy)) + haze;
     }
 
     //color = haze;

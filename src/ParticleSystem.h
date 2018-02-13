@@ -30,6 +30,9 @@ class ParticleSystem {
 	
 	void kill(int id);
 	void spawn(Particle particle);
+	void spawn();
+	void update(float dt);
+	void run(glm::mat4 view, float dt);
 	void process_particles(float dt);
 	void draw(glm::mat4 view);
 
@@ -38,6 +41,8 @@ private:
 	GLuint vbo;
 	Shader* shader;
 	Texture* texture;
+	float time;
+	float interval;
 	std::vector<Particle> particles;
 	int max_size;
 };

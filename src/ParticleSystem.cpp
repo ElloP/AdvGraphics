@@ -1,6 +1,18 @@
 #include "ParticleSystem.h"
 #include <algorithm>
+#include "Mathhelper.h"
 
+
+void ParticleSystem::run(glm::mat4 view, float dt) {
+	update(dt);
+	spawn();
+	draw(view);
+	process_particles(dt);	
+}
+
+void ParticleSystem::update(float dt) {
+	time += dt;
+}
 
 void ParticleSystem::kill(int id) {
 	particles[id] = particles[particles.size() - 1];
@@ -23,6 +35,24 @@ void ParticleSystem::process_particles(float dt) {
 	for (unsigned i = 0; i < particles.size(); ++i) {
 		particles[i].pos += particles[i].velocity * dt;
 		particles[i].lifetime += dt;
+	}
+}
+
+void ParticleSystem::spawn() {
+	interval = 0.1f;
+	if (time > interval) {
+		time -= interval;
+		for (int i = 0; i < 10; i++) {
+			const float theta = mathhelper::uniform_randf(0.f, 2.f * M_PI);
+			const float u = mathhelper::uniform_randf(-1.0f, 1.f);
+			glm::vec3 pos = glm::vec3(sqrt(1.f - u * u) * cosf(theta), u, sqrt(1.f - u * u) * sinf(theta));
+			Particle particle;
+			particle.velocity = pos * 1.0f;
+			particle.pos = pos * 1.0f;
+			particle.life_length = 3;
+			particle.lifetime = 0;
+			spawn(particle);
+		}
 	}
 }
 
@@ -59,5 +89,7 @@ void ParticleSystem::draw(glm::mat4 view) {
 
 	glDisable(GL_BLEND);
 	glDisable(GL_PROGRAM_POINT_SIZE);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	//glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_ONE);
 }

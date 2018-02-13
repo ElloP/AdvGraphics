@@ -3,7 +3,7 @@
 
 void ParticleGalaxy::draw(const glm::mat4 view, float deltaTime) {
 	for (int i = 0; i < systems.size(); i++) {
-		systems[i]->process_particles(deltaTime);
+		systems[i]->update(deltaTime);
 		systems[i]->draw(view);
 	}
 }
