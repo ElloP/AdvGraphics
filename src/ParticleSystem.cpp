@@ -45,6 +45,7 @@ void ParticleSystem::spawn() {
 		for (int i = 0; i < 10; i++) {
 			const float theta = mathhelper::uniform_randf(0.f, 2.f * M_PI);
 			const float u = mathhelper::uniform_randf(-1.0f, 1.f);
+			//const float u = mathhelper::uniform_randf(0.95f, 1.f);
 			glm::vec3 pos = glm::vec3(sqrt(1.f - u * u) * cosf(theta), u, sqrt(1.f - u * u) * sinf(theta));
 			Particle particle;
 			particle.velocity = pos * 1.0f;
@@ -57,9 +58,9 @@ void ParticleSystem::spawn() {
 }
 
 void ParticleSystem::draw(glm::mat4 view) {
-	texture->bind();
 	shader->use();
-
+	texture->bind();
+	
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	glEnable(GL_BLEND);

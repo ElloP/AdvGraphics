@@ -112,7 +112,7 @@ void render()
 	// setting up shaders
 	cubeShader = Shader(lightvsPath.c_str(), lightfsPath.c_str());
 	lampShader = Shader(lampvsPath.c_str(), lampfsPath.c_str());
-	//particleShader = Shader(particlevsPath.c_str(), particlefsPath.c_str());
+	particleShader = Shader(particlevsPath.c_str(), particlefsPath.c_str());
 	hazeShader = Shader(hazevsPath.c_str(), hazefsPath.c_str());
 	postShader = Shader(postvsPath.c_str(), postfsPath.c_str());
 	outlineShader = Shader(outlinevsPath.c_str(), outlinefsPath.c_str());
@@ -152,6 +152,7 @@ void render()
 	ParticleSystem hazeParticleSystem(1000, &hazeShader, &t3); //testsystem
 
 	//particleGalaxy.add(&particleSystem);
+	//particleGalaxy.add(&hazeParticleSystem);
 
 	
 	glGenVertexArrays(1, &cubeVAO);
@@ -226,48 +227,57 @@ void render()
 		
 		//Do frame buffer
 		FboInfo &postProcessFbo = fboList[0];
-		glBindFramebuffer(GL_FRAMEBUFFER, postProcessFbo.framebufferId); 
-		glClearColor(0.0, 0.0, 0.0, 1.0);
-		glViewport(0, 0, WIDTH, HEIGHT);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		glBindFramebuffer(GL_FRAMEBUFFER, postProcessFbo.framebufferId); 
+		glEnable(GL_DEPTH_TEST);
+		glViewport(0, 0, WIDTH, HEIGHT);
+		glClearColor(0.0, 0.0, 0.0, 1.0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
 		drawScene(camera.GetViewMatrix(), projection);
 
 		FboInfo &hazeProcessFbo = fboList[1];
 		glBindFramebuffer(GL_FRAMEBUFFER, hazeProcessFbo.framebufferId); 
-
+		glEnable(GL_DEPTH_TEST);
 		glViewport(0, 0, WIDTH, HEIGHT);
 		glClearColor(0.0, 0.0, 0.0, 1.0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+		
 		// set particles
 		hazeShader.use();
 		hazeShader.setUniform("P", projection);
 		hazeShader.setUniform("screen_x", float(WIDTH));
 		hazeShader.setUniform("screen_y", float(HEIGHT));
 
-		hazeParticleSystem.run(camera.GetViewMatrix(), deltaTime);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, postProcessFbo.depthBuffer);
 
+		hazeParticleSystem.run(camera.GetViewMatrix(), deltaTime);
+		
 		//Post process
+		
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClearColor(0.0, 0.0, 0.0, 1.0);
-
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		
 		postShader.use();
 		postShader.setUniform("time", float(glfwGetTime()));
-
+		 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, postProcessFbo.colorTextureTarget);
-
+		
 		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, hazeProcessFbo.colorTextureTarget);
 
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, hazeProcessFbo.depthBuffer);
+		
 		FullscreenQuad quad;
 		quad.drawFullscreenQuad();
-
-		//env_map.draw(camera.GetViewMatrix(), projection);
+		
 		w.update();
 		blendAmount+=0.01;
-		rotation =deltaTime * 2 * M_PI * 10;
+		rotation = deltaTime * 2 * M_PI * 10;
 	}
 }
 

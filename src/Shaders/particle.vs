@@ -21,5 +21,5 @@ void main()
     gl_Position  = P * particle_vs;
     // Scale the point with regard to the previosly defined scale_factor
     // and the life (it will get larger the older it is)
-    gl_PointSize = scale_factor * mix(0.0, 5.0, pow(life, 1.0/4.0));
+    gl_PointSize = scale_factor * (1 - mix(0.0, 1.0, pow(life, 1.0/4.0)));
 }
