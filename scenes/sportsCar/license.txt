@@ -1,0 +1,7 @@
+Copyright Yasutoshi Mori
+
+Yasutoshi Mori created this model of a Sports Car.
+
+Morgan McGuire converted it from MB to OBJ+MTL format.
+
+https://creativecommons.org/licenses/by/4.0/

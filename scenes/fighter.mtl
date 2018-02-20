@@ -1,0 +1,49 @@
+# Exported by Chalmers Graphics Group
+newmtl Fire
+Kd 0 0 0
+Ks 0.964706 1 1
+Ke 1 0.3 0.3
+Pr 0
+Ns 1
+newmtl GlowingBlue
+Kd 0 0 0
+Ks 0.360784 0.360784 0.360784
+Ke 0 0 0
+Pr 0
+Ns 897.541
+newmtl BrightLight
+Kd 0 0 0
+Ks 0.2 0.2 0.2
+Ke 1 1 0.470588
+Pr 0
+Ns 1
+newmtl GreenMatte
+Kd 0.592157 0.619608 0
+Ks 0 0 0
+Ke 0 0 0
+Pr 0
+Ns 1
+newmtl Chrome
+Kd 0 0 0
+Ks 1 1 1
+Ke 0 0 0
+Pr 0
+Ns 1
+newmtl RedMetal
+Kd 0.882353 0.0862745 0.0941176
+Ks 0.501961 0.501961 0.501961
+Ke 0 0 0
+Pr 0
+Ns 930.328
+newmtl DarkGray
+Kd 0 0 0
+Ks 0.2 0.2 0.329412
+Ke 0 0 0
+Pr 0
+Ns 1
+newmtl ShinyMetal
+Kd 0.784314 0.784314 0.784314
+Ks 0.784314 0.784314 0.784314
+Ke 0 0 0
+Pr 0
+Ns 36.885

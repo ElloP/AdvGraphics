@@ -1,0 +1,67 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 31.10.2012 20:44:17
+
+
+newlight Light01
+	lightposition -0.0 0.7 -0.0
+	lightcolor 1.0 0.8 0.8
+	lightradius 0.2
+	lightintensity 2.0
+
+#newlight Light01
+#	lightposition -0.7 0.7 -0.7
+#	lightcolor 1.0 0.8 0.8
+#	lightradius 0.2
+#	lightintensity 2.0
+
+#newlight Light02
+#	lightposition 0.7 0.7 -0.7
+#	lightcolor 0.8 0.8 1.0
+#	lightradius 0.2
+#	lightintensity 2.0
+
+newcamera Camera01
+	cameraposition 0.0 0.0 3.0
+	cameratarget 0.0 0.0 0.0
+	cameraup 0.0 1.0 0.0
+	camerafov 45.0
+
+newcamera Camera02
+	cameraposition -0.5 0.0 3.0
+	cameratarget 0.5 0.0 0.0
+	cameraup 1.0 1.0 0.0
+	camerafov 45.0
+
+newmtl GreenWall
+	diffuseReflectance 0.3137 0.8039 0.3294
+
+newmtl Floor
+	diffuseReflectance 0.7843 0.7843 0.7843
+	diffuseReflectanceMap ../scenes/uvtest.png
+
+newmtl Roof
+	diffuseReflectance 0.0902 0.0902 0.0902
+
+newmtl BlueWall
+	diffuseReflectance 0.3294 0.3451 0.7255
+
+newmtl RedWall
+	diffuseReflectance 0.7529 0.3059 0.3137
+
+newmtl LeftBox	
+	specularReflectance 0.7 0.7 0.7
+	diffuseReflectance 0.25 0.25 0.805804
+	reflat0deg 0.3
+	reflAt90Deg 1.0
+	indexOfRefraction 1.55
+	transparency 0.0
+	specularroughness 0.001
+
+newmtl RightBox	
+	specularReflectance 0.7 0.7 0.7
+	diffuseReflectance 0.18 0.725 0.725
+	reflat0deg 0.2
+	reflAt90Deg 1.0
+	indexOfRefraction 1.55
+	transparency 1.0
+	specularroughness 0.001

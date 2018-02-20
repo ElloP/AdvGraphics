@@ -1,0 +1,50 @@
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 06.11.2012 21:04:15
+
+newlight Light01
+	lightposition -0.7 0.7 -0.7
+	lightcolor 1.0 0.8 0.8
+	lightradius 0.2
+	lightintensity 2.0
+
+newcamera Camera01
+	cameraposition 0.0 0.0 3.0
+	cameratarget 0.0 0.0 0.0
+	cameraup 0.0 1.0 0.0
+	camerafov 45.0
+
+newmtl GreenWall
+	Kd 0.3137 0.8039 0.3294
+	reflat0deg 0.1
+	reflAt90Deg 1.0
+
+newmtl Floor
+	Kd 0.7843 0.7843 0.7843
+
+newmtl Roof
+	Kd 0.0902 0.0902 0.0902
+
+newmtl BlueWall
+	Kd 0.3294 0.3451 0.7255
+	reflat0deg 0.1
+	reflAt90Deg 1.0
+
+newmtl RedWall
+	Kd 0.7529 0.3059 0.3137
+	reflat0deg 0.1
+	reflAt90Deg 1.0
+
+newmtl Bottle
+	Kd 0.3451 0.7804 0.8824
+	reflat0deg 0.1
+	reflAt90Deg 1.0
+	indexOfRefraction 1.4
+	transparency 1.0
+
+newmtl Cork
+	Kd 0.6745 0.5725 0.4902
+
+newmtl Stand
+	Kd 0.235 0.2294 0.0235
+	reflat0deg 0.4
+	reflAt90Deg 1.0
