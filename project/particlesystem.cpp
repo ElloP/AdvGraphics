@@ -1,6 +1,7 @@
 #include "ParticleSystem.h"
 #include <algorithm>
-#include "Mathhelper.h"
+#include <labhelper.h>
+
 
 
 void ParticleSystem::run(glm::mat4 view, float dt) {
@@ -43,8 +44,8 @@ void ParticleSystem::spawn() {
 	if (time > interval) {
 		time -= interval;
 		for (int i = 0; i < 10; i++) {
-			const float theta = mathhelper::uniform_randf(0.f, 2.f * M_PI);
-			const float u = mathhelper::uniform_randf(-1.0f, 1.f);
+			const float theta = labhelper::uniform_randf(0.f, 2.f * M_PI);
+			const float u = labhelper::uniform_randf(-1.0f, 1.f);
 			//const float u = mathhelper::uniform_randf(0.95f, 1.f);
 			glm::vec3 pos = glm::vec3(sqrt(1.f - u * u) * cosf(theta), u, sqrt(1.f - u * u) * sinf(theta));
 			Particle particle;
@@ -58,8 +59,9 @@ void ParticleSystem::spawn() {
 }
 
 void ParticleSystem::draw(glm::mat4 view) {
-	shader->use();
-	texture->bind();
+	glUseProgram(shader);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture);
 	
 	glEnable(GL_PROGRAM_POINT_SIZE);
 

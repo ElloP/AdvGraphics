@@ -1,10 +1,8 @@
 #pragma once
 #include <vector>
-#include "glad/glad.h"
-#include <glm/detail/type_vec3.hpp>
-#include <glm/mat4x4.hpp>
-#include "Shader.h"
-#include "Texture.h"
+#include <GL/glew.h>
+#include <glm/gtx/transform.hpp>
+
 
 struct Particle {
 	float lifetime;
@@ -15,7 +13,7 @@ struct Particle {
 
 class ParticleSystem {
  public:	
-	explicit ParticleSystem(int size, Shader* _shader, Texture* _texture) : max_size(size), shader(_shader), texture(_texture) {
+	explicit ParticleSystem(int size, GLuint _shader, GLuint _texture) : max_size(size), shader(_shader), texture(_texture) {
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 4 * max_size, nullptr, GL_STATIC_DRAW);
@@ -39,8 +37,8 @@ class ParticleSystem {
 private:
 	GLuint vao;
 	GLuint vbo;
-	Shader* shader;
-	Texture* texture;
+	GLuint shader;
+	GLuint texture;
 	float time;
 	float interval;
 	std::vector<Particle> particles;
