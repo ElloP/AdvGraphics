@@ -21,6 +21,7 @@ using namespace glm;
 #include <Model.h>
 #include "hdr.h"
 #include "fbo.h"
+#include "particlesystem.h"
 
 
 
@@ -44,6 +45,9 @@ int windowWidth, windowHeight;
 GLuint shaderProgram; // Shader for rendering the final image
 GLuint simpleShaderProgram; // Shader used to draw the shadow map
 GLuint backgroundProgram;
+GLuint postProcessProgram;
+GLuint particlesProgram;
+GLuint onlyParticlesProgram;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Environment
@@ -60,9 +64,16 @@ vec3 point_light_color = vec3(1.f, 1.f, 1.f);
 
 float point_light_intensity_multiplier = 10000.0f;
 
+///////////////////////////////////////////////////////////////////////////////
+// FBO
+///////////////////////////////////////////////////////////////////////////////
+std::vector<FboInfo> fboList;
 
+///////////////////////////////////////////////////////////////////////////////
+// Particle systems
+///////////////////////////////////////////////////////////////////////////////
 
-
+ParticleSystem particleSystem;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Camera parameters.
@@ -102,6 +113,9 @@ void initGL()
 	backgroundProgram   = labhelper::loadShaderProgram("../project/shaders/background.vert", "../project/shaders/background.frag");
 	shaderProgram       = labhelper::loadShaderProgram("../project/shaders/shading.vert",    "../project/shaders/shading.frag");
 	simpleShaderProgram = labhelper::loadShaderProgram("../project/shaders/simple.vert",     "../project/shaders/simple.frag");
+	onlyParticlesProgram = labhelper::loadShaderProgram("../project/shaders/simple.vert", "../project/shaders/simple.frag");
+	postProcessProgram = labhelper::loadShaderProgram("../project/shaders/postprocess.vert", "../project/shaders/postprocess.frag");
+	particlesProgram = labhelper::loadShaderProgram("../project/shaders/particle.vert", "../project/shaders/particle.frag");
 
 	///////////////////////////////////////////////////////////////////////
 	// Load models and set up model matrices
@@ -130,7 +144,25 @@ void initGL()
 	glEnable(GL_DEPTH_TEST);	// enable Z-buffering 
 	glEnable(GL_CULL_FACE);		// enables backface culling
 
+	///////////////////////////////////////////////////////////////////////////
+	// Setup Framebuffers
+	///////////////////////////////////////////////////////////////////////////
+	int w, h;
+	SDL_GetWindowSize(g_window, &w, &h);
+	const int numFbos = 5;
+	for (int i = 0; i < numFbos; i++) {
+		FboInfo fbo = FboInfo();
+		fbo.resize(w, h);
+		fboList.push_back(fbo);
+	}
 
+	SDL_GetWindowSize(g_window, &w, &h);
+
+	///////////////////////////////////////////////////////////////////////////
+	// Setup Particle Systems
+	///////////////////////////////////////////////////////////////////////////
+	GLuint explosion = labhelper::loadHdrTexture("../scenes/explosion.png");
+	particleSystem = ParticleSystem(100, onlyParticlesProgram, explosion);
 }
 
 void debugDrawLight(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix, const glm::vec3 &worldSpaceLightPos)
@@ -183,8 +215,18 @@ void drawScene(GLuint currentShaderProgram, const mat4 &viewMatrix, const mat4 &
 	labhelper::setUniformSlow(currentShaderProgram, "normalMatrix", inverse(transpose(viewMatrix * fighterModelMatrix)));
 
 	labhelper::render(fighterModel);
+
+	// haze particles
+	glUseProgram(particlesProgram);
+	labhelper::setUniformSlow(particlesProgram, "P", projectionMatrix);
+	labhelper::setUniformSlow(particlesProgram, "screen_x", float(windowWidth));
+	labhelper::setUniformSlow(particlesProgram, "screen_y", float(windowHeight));
 }
 
+
+void update(void) {
+	particleSystem.update(deltaTime);
+}
 
 void display(void)
 {
@@ -222,12 +264,11 @@ void display(void)
 	glBindTexture(GL_TEXTURE_2D, reflectionMap);
 	glActiveTexture(GL_TEXTURE0);
 
-
-
 	///////////////////////////////////////////////////////////////////////////
 	// Draw from camera
 	///////////////////////////////////////////////////////////////////////////
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	FboInfo &postProcessBuffer = fboList[0];
+	glBindFramebuffer(GL_FRAMEBUFFER, postProcessBuffer.framebufferId);
 	glViewport(0, 0, windowWidth, windowHeight);
 	glClearColor(0.2, 0.2, 0.8, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -236,8 +277,29 @@ void display(void)
 	drawScene(shaderProgram, viewMatrix, projMatrix, lightViewMatrix, lightProjMatrix);
 	debugDrawLight(viewMatrix, projMatrix, vec3(lightPosition));
 
+	///////////////////////////////////////////////////////////////////////////
+	// Post processing pass(es)
+	///////////////////////////////////////////////////////////////////////////
 
+	FboInfo &hazeParticlesBuffer = fboList[1];
+	glBindFramebuffer(GL_FRAMEBUFFER, hazeParticlesBuffer.framebufferId);
+	glUseProgram(onlyParticlesProgram);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, postProcessBuffer.depthBuffer);
+	//particleSystem.draw(viewMatrix);
 
+	///////////////////////////////////////////////////////////////////////////
+	// Draw final scene
+	///////////////////////////////////////////////////////////////////////////
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glUseProgram(postProcessProgram);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, postProcessBuffer.colorTextureTargets[0]);
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, hazeParticlesBuffer.colorTextureTargets[0]);
+
+	labhelper::drawFullScreenQuad();
 }
 
 bool handleEvents(void)
@@ -321,6 +383,10 @@ int main(int argc, char *argv[])
 		previousTime = currentTime;
 		currentTime  = timeSinceStart.count();
 		deltaTime    = currentTime - previousTime;
+
+		// update logic
+		update();
+
 		// render to window
 		display();
 

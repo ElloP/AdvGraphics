@@ -13,6 +13,8 @@ struct Particle {
 
 class ParticleSystem {
  public:	
+	explicit ParticleSystem(){};
+
 	explicit ParticleSystem(int size, GLuint _shader, GLuint _texture) : max_size(size), shader(_shader), texture(_texture) {
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -30,7 +32,6 @@ class ParticleSystem {
 	void spawn(Particle particle);
 	void spawn();
 	void update(float dt);
-	void run(glm::mat4 view, float dt);
 	void process_particles(float dt);
 	void draw(glm::mat4 view);
 

@@ -2,17 +2,10 @@
 #include <algorithm>
 #include <labhelper.h>
 
-
-
-void ParticleSystem::run(glm::mat4 view, float dt) {
-	update(dt);
-	spawn();
-	draw(view);
-	process_particles(dt);	
-}
-
 void ParticleSystem::update(float dt) {
 	time += dt;
+	spawn();
+	process_particles(dt);
 }
 
 void ParticleSystem::kill(int id) {
@@ -49,9 +42,9 @@ void ParticleSystem::spawn() {
 			//const float u = mathhelper::uniform_randf(0.95f, 1.f);
 			glm::vec3 pos = glm::vec3(sqrt(1.f - u * u) * cosf(theta), u, sqrt(1.f - u * u) * sinf(theta));
 			Particle particle;
-			particle.velocity = pos * 1.0f;
-			particle.pos = pos * 1.0f;
-			particle.life_length = 3;
+			particle.velocity = pos * 10.0f;
+			particle.pos = pos * 10.0f;
+			particle.life_length = 1;
 			particle.lifetime = 0;
 			spawn(particle);
 		}
@@ -66,7 +59,7 @@ void ParticleSystem::draw(glm::mat4 view) {
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	unsigned int active_particles = particles.size();
 
