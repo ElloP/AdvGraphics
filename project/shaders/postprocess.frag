@@ -17,9 +17,12 @@ vec4 textureRect(in sampler2D tex, vec2 rectangleCoord)
 
 void main()
 {
-
+	vec2 texSize = textureSize(frameBufferTexture, 0);
     vec4 frame = textureRect(frameBufferTexture, gl_FragCoord.xy);
     vec4 haze = textureRect(hazeBufferTexture, gl_FragCoord.xy);
+
+	vec2 distortion = sin(time * haze.xy);
+	vec2 distorted =  gl_FragCoord.xy + distortion;
     
-    color = haze.x == 0 ? frame : textureRect(frameBufferTexture, gl_FragCoord.xy + sin(time * haze.xy) * 10) + haze;
+    color = haze.x == 0 ? frame : textureRect(frameBufferTexture, distorted) + haze/4;
 }

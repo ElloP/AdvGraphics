@@ -4,8 +4,6 @@ uniform mat4 P;
 uniform float screen_x;
 uniform float screen_y;
 out float life;
-out float lifetime;
-out vec4 position;
 
 void main()
 {
@@ -24,6 +22,5 @@ void main()
     // Scale the point with regard to the previosly defined scale_factor
     // and the life (it will get larger the older it is)
 	//gl_PointSize = scale_factor * 1.0f;
-	position = P * particle;
-	gl_PointSize = scale_factor * mix(1.0, 0.0, life/2);
+	gl_PointSize = scale_factor * mix(5.0, 0.0, life/3);
 }

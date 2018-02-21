@@ -1,6 +1,5 @@
 #version 420 compatibility
 in float life;
-in vec4 position;
 
 uniform float time;
 
