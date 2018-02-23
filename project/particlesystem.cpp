@@ -42,9 +42,10 @@ void ParticleSystem::spawn() {
 			//const float u = mathhelper::uniform_randf(0.95f, 1.f);
 			glm::vec3 pos = glm::vec3(sqrt(1.f - u * u) * cosf(theta), u, sqrt(1.f - u * u) * sinf(theta));
 			Particle particle;
-			particle.velocity = pos * 10.0f;
-			particle.pos = pos * 10.0f;
-			particle.life_length = 1;
+			particle.velocity = pos * 5.0f;
+			particle.pos = pos * 5.0f;
+			particle.pos.y += 20;
+			particle.life_length = 3;
 			particle.lifetime = 0;
 			spawn(particle);
 		}
@@ -59,11 +60,16 @@ void ParticleSystem::draw(glm::mat4 view) {
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
 	unsigned int active_particles = particles.size();
 
-	if (active_particles == 0) return;
+	if (active_particles == 0) {
+		glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		glDisable(GL_BLEND);
+		glDisable(GL_PROGRAM_POINT_SIZE);
+		return;
+	}
 
 	std::vector<glm::vec4> data;
 
@@ -83,9 +89,7 @@ void ParticleSystem::draw(glm::mat4 view) {
 
 	glDrawArrays(GL_POINTS, 0, active_particles);
 
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glDisable(GL_BLEND);
 	glDisable(GL_PROGRAM_POINT_SIZE);
-
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glBlendFunc(GL_SRC_ALPHA_SATURATE, GL_ONE);
 }

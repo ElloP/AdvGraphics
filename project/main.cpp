@@ -113,7 +113,7 @@ void initGL()
 	backgroundProgram   = labhelper::loadShaderProgram("../project/shaders/background.vert", "../project/shaders/background.frag");
 	shaderProgram       = labhelper::loadShaderProgram("../project/shaders/shading.vert",    "../project/shaders/shading.frag");
 	simpleShaderProgram = labhelper::loadShaderProgram("../project/shaders/simple.vert",     "../project/shaders/simple.frag");
-	onlyParticlesProgram = labhelper::loadShaderProgram("../project/shaders/simple.vert", "../project/shaders/simple.frag");
+	onlyParticlesProgram = labhelper::loadShaderProgram("../project/shaders/onlyparticles.vert", "../project/shaders/onlyparticles.frag");
 	postProcessProgram = labhelper::loadShaderProgram("../project/shaders/postprocess.vert", "../project/shaders/postprocess.frag");
 	particlesProgram = labhelper::loadShaderProgram("../project/shaders/particle.vert", "../project/shaders/particle.frag");
 
@@ -161,8 +161,8 @@ void initGL()
 	///////////////////////////////////////////////////////////////////////////
 	// Setup Particle Systems
 	///////////////////////////////////////////////////////////////////////////
-	GLuint explosion = labhelper::loadHdrTexture("../scenes/explosion.png");
-	particleSystem = ParticleSystem(100, onlyParticlesProgram, explosion);
+	GLuint explosion = labhelper::loadParticleTexture("../scenes/explosion.png");
+	particleSystem = ParticleSystem(1000, onlyParticlesProgram, explosion);
 }
 
 void debugDrawLight(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix, const glm::vec3 &worldSpaceLightPos)
@@ -215,12 +215,6 @@ void drawScene(GLuint currentShaderProgram, const mat4 &viewMatrix, const mat4 &
 	labhelper::setUniformSlow(currentShaderProgram, "normalMatrix", inverse(transpose(viewMatrix * fighterModelMatrix)));
 
 	labhelper::render(fighterModel);
-
-	// haze particles
-	glUseProgram(particlesProgram);
-	labhelper::setUniformSlow(particlesProgram, "P", projectionMatrix);
-	labhelper::setUniformSlow(particlesProgram, "screen_x", float(windowWidth));
-	labhelper::setUniformSlow(particlesProgram, "screen_y", float(windowHeight));
 }
 
 
@@ -256,6 +250,7 @@ void display(void)
 	///////////////////////////////////////////////////////////////////////////
 	// Bind the environment map(s) to unused texture units
 	///////////////////////////////////////////////////////////////////////////
+	glUseProgram(shaderProgram);
 	glActiveTexture(GL_TEXTURE6);
 	glBindTexture(GL_TEXTURE_2D, environmentMap);
 	glActiveTexture(GL_TEXTURE7);
@@ -270,7 +265,7 @@ void display(void)
 	FboInfo &postProcessBuffer = fboList[0];
 	glBindFramebuffer(GL_FRAMEBUFFER, postProcessBuffer.framebufferId);
 	glViewport(0, 0, windowWidth, windowHeight);
-	glClearColor(0.2, 0.2, 0.8, 1.0);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	drawBackground(viewMatrix, projMatrix);
@@ -283,21 +278,36 @@ void display(void)
 
 	FboInfo &hazeParticlesBuffer = fboList[1];
 	glBindFramebuffer(GL_FRAMEBUFFER, hazeParticlesBuffer.framebufferId);
+	glViewport(0, 0, windowWidth, windowHeight);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	glUseProgram(onlyParticlesProgram);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, postProcessBuffer.depthBuffer);
-	//particleSystem.draw(viewMatrix);
+
+	labhelper::setUniformSlow(onlyParticlesProgram, "P", projMatrix);
+	labhelper::setUniformSlow(onlyParticlesProgram, "screen_x", float(windowWidth));
+	labhelper::setUniformSlow(onlyParticlesProgram, "screen_y", float(windowHeight));
+	
+	particleSystem.draw(viewMatrix);
 
 	///////////////////////////////////////////////////////////////////////////
 	// Draw final scene
 	///////////////////////////////////////////////////////////////////////////
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glViewport(0, 0, windowWidth, windowHeight);
+	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 	glUseProgram(postProcessProgram);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, postProcessBuffer.colorTextureTargets[0]);
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, hazeParticlesBuffer.colorTextureTargets[0]);
+
+	labhelper::setUniformSlow(postProcessProgram, "time", currentTime);
 
 	labhelper::drawFullScreenQuad();
 }

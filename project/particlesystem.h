@@ -40,7 +40,7 @@ private:
 	GLuint vbo;
 	GLuint shader;
 	GLuint texture;
-	float time;
+	float time = 0;
 	float interval;
 	std::vector<Particle> particles;
 	int max_size;

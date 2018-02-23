@@ -50,6 +50,11 @@ namespace labhelper {
 #	define __debugbreak() assert(false)
 #endif
 
+	GLuint loadTexture(const std::string &path, GLuint internalFormat, GLuint format);
+
+	GLuint loadDiffuseTexture(const std::string &diffusePath);
+	GLuint loadParticleTexture(const std::string &particlePath);
+
 	/**
 	 * Internal function used by macro CHECK_GL_ERROR, use that instead.
 	 */

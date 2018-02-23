@@ -12,17 +12,27 @@ out vec4 color;
 
 vec4 textureRect(in sampler2D tex, vec2 rectangleCoord)
 {
-	return texture(tex, rectangleCoord / textureSize(tex, 0));
+	vec2 texCoord = rectangleCoord / textureSize(tex, 0);
+
+	return texture(tex, texCoord);
+}
+
+vec4 particleRect(in sampler2D tex, vec2 rectangleCoord)
+{
+	vec2 texCoord = rectangleCoord / textureSize(tex, 0);
+	texCoord.x = clamp(texCoord.x, 0 , 1);
+	texCoord.y = clamp(texCoord.y, 0 , 1);
+
+	return texture(tex, texCoord);
 }
 
 void main()
 {
-	vec2 texSize = textureSize(frameBufferTexture, 0);
     vec4 frame = textureRect(frameBufferTexture, gl_FragCoord.xy);
     vec4 haze = textureRect(hazeBufferTexture, gl_FragCoord.xy);
 
-	vec2 distortion = sin(time * haze.xy);
+	vec2 distortion = sin(time * haze.xy) * 10;
 	vec2 distorted =  gl_FragCoord.xy + distortion;
     
-    color = haze.x == 0 ? frame : textureRect(frameBufferTexture, distorted) + haze/4;
+    color = haze.x == 0 ? frame : particleRect(frameBufferTexture, distorted) + haze;
 }
