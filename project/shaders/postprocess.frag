@@ -35,4 +35,7 @@ void main()
 	vec2 distorted =  gl_FragCoord.xy + distortion;
     
     color = haze.x == 0 ? frame : particleRect(frameBufferTexture, distorted) + haze;
+    color += frame;
+    color /= 2;
+
 }

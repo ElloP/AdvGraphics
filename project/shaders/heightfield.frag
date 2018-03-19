@@ -79,7 +79,7 @@ vec3 calculateDirectIllumiunation(vec3 wo, vec3 n)
 	// vec3 diffuse_term = ...
 	
 	vec3 diffuse_term = material_color * (1/M_PI) * abs(ndotwi) * Li;
-
+	return diffuse_term;
 	///////////////////////////////////////////////////////////////////////////
 	// Task 2 - Calculate the Torrance Sparrow BRDF and return the light 
 	//          reflected from that instead
@@ -174,15 +174,9 @@ void main()
 	vec3 wo = normalize(-viewSpacePosition);
 	vec3 n = normalize(viewSpaceNormal);
 
-	vec3 direct_illumination_term = vec3(0.0);
-	{ // Direct illumination
-		direct_illumination_term = calculateDirectIllumiunation(wo, n);
-	}
+	vec3 direct_illumination_term = calculateDirectIllumiunation(wo, n);
 
-	vec3 indirect_illumination_term = vec3(0.0);
-	{ // Indirect illumination
-		indirect_illumination_term = calculateIndirectIllumination(wo, n);
-	}
+	vec3 indirect_illumination_term = calculateIndirectIllumination(wo, n);
 
 	///////////////////////////////////////////////////////////////////////////
 	// Task 7 - Make glowy things glow!

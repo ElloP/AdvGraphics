@@ -23,6 +23,8 @@ using namespace glm;
 #include "fbo.h"
 #include "particlesystem.h"
 
+#include "heightfield.h"
+
 
 
 
@@ -48,6 +50,7 @@ GLuint backgroundProgram;
 GLuint postProcessProgram;
 GLuint particlesProgram;
 GLuint onlyParticlesProgram;
+GLuint heightfieldProgram;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Environment
@@ -95,6 +98,10 @@ mat4 roomModelMatrix;
 mat4 landingPadModelMatrix; 
 mat4 fighterModelMatrix;
 
+// HEIGHTFIELD
+HeightField heightfield;
+GLuint heigtfieldProgram;
+
 void loadShaders(bool is_reload)
 {
 	GLuint shader = labhelper::loadShaderProgram("../project/shaders/simple.vert", "../project/shaders/simple.frag", is_reload);
@@ -116,7 +123,7 @@ void initGL()
 	onlyParticlesProgram = labhelper::loadShaderProgram("../project/shaders/onlyparticles.vert", "../project/shaders/onlyparticles.frag");
 	postProcessProgram = labhelper::loadShaderProgram("../project/shaders/postprocess.vert", "../project/shaders/postprocess.frag");
 	particlesProgram = labhelper::loadShaderProgram("../project/shaders/particle.vert", "../project/shaders/particle.frag");
-
+	heightfieldProgram = labhelper::loadShaderProgram("../project/shaders/heightfield.vert", "../project/shaders/heightfield.frag");
 	///////////////////////////////////////////////////////////////////////
 	// Load models and set up model matrices
 	///////////////////////////////////////////////////////////////////////
@@ -163,6 +170,12 @@ void initGL()
 	///////////////////////////////////////////////////////////////////////////
 	GLuint explosion = labhelper::loadParticleTexture("../scenes/explosion.png");
 	particleSystem = ParticleSystem(1000, onlyParticlesProgram, explosion);
+
+	//Heightfield
+
+	heightfield.generateMesh(1024);
+	heightfield.loadHeightField("../scenes/nlsFinland/L3123F.png");
+	heightfield.loadDiffuseTexture("../scenes/nlsFinland/L3123F_downscaled.jpg");
 }
 
 void debugDrawLight(const glm::mat4 &viewMatrix, const glm::mat4 &projectionMatrix, const glm::vec3 &worldSpaceLightPos)
@@ -215,8 +228,38 @@ void drawScene(GLuint currentShaderProgram, const mat4 &viewMatrix, const mat4 &
 	labhelper::setUniformSlow(currentShaderProgram, "normalMatrix", inverse(transpose(viewMatrix * fighterModelMatrix)));
 
 	labhelper::render(fighterModel);
-}
 
+
+}
+void drawTerrain(GLuint currentShaderProgram, const mat4 &viewMatrix, const mat4 &projectionMatrix, const mat4 &lightViewMatrix, const mat4 &lightProjectionMatrix) {
+	//glDisable(GL_CULL_FACE);
+	glUseProgram(currentShaderProgram);
+	// Light source
+	vec4 viewSpaceLightPosition = viewMatrix * vec4(lightPosition, 1.0f);
+	labhelper::setUniformSlow(currentShaderProgram, "point_light_color", point_light_color);
+	labhelper::setUniformSlow(currentShaderProgram, "point_light_intensity_multiplier", point_light_intensity_multiplier);
+	labhelper::setUniformSlow(currentShaderProgram, "viewSpaceLightPosition", vec3(viewSpaceLightPosition));
+	labhelper::setUniformSlow(currentShaderProgram, "viewSpaceLightDir", normalize(vec3(viewMatrix * vec4(-lightPosition, 0.0f))));
+
+
+	// Environment
+	labhelper::setUniformSlow(currentShaderProgram, "environment_multiplier", environment_multiplier);
+
+	// camera
+	labhelper::setUniformSlow(currentShaderProgram, "viewInverse", inverse(viewMatrix));
+
+	mat4 model = glm::scale(glm::mat4(1), glm::vec3(1000, 100, 1000));
+	labhelper::setUniformSlow(currentShaderProgram, "modelViewProjectionMatrix", projectionMatrix * viewMatrix * model);
+	labhelper::setUniformSlow(currentShaderProgram, "modelViewMatrix", viewMatrix * model);
+	labhelper::setUniformSlow(currentShaderProgram, "normalMatrix", inverse(transpose(viewMatrix * model)));
+
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	//"modelViewProjectionMatrix", projectionMatrix * viewMatrix
+	heightfield.submitTriangles();
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+
+}
 
 void update(void) {
 	particleSystem.update(deltaTime);
@@ -269,6 +312,8 @@ void display(void)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	drawBackground(viewMatrix, projMatrix);
+
+	drawTerrain(heightfieldProgram, viewMatrix, projMatrix, lightViewMatrix, lightProjMatrix);
 	drawScene(shaderProgram, viewMatrix, projMatrix, lightViewMatrix, lightProjMatrix);
 	debugDrawLight(viewMatrix, projMatrix, vec3(lightPosition));
 
@@ -290,7 +335,7 @@ void display(void)
 	labhelper::setUniformSlow(onlyParticlesProgram, "screen_x", float(windowWidth));
 	labhelper::setUniformSlow(onlyParticlesProgram, "screen_y", float(windowHeight));
 	
-	particleSystem.draw(viewMatrix);
+	//particleSystem.draw(viewMatrix);
 
 	///////////////////////////////////////////////////////////////////////////
 	// Draw final scene
