@@ -120,18 +120,23 @@ void loadShaders(bool is_reload)
 	if (shader != 0) shaderProgram = shader;
 }
 
+void loadShaders() {
+	backgroundProgram = labhelper::loadShaderProgram("../project/shaders/background.vert", "../project/shaders/background.frag");
+	shaderProgram = labhelper::loadShaderProgram("../project/shaders/shading.vert", "../project/shaders/shading.frag");
+	simpleShaderProgram = labhelper::loadShaderProgram("../project/shaders/simple.vert", "../project/shaders/simple.frag");
+	onlyParticlesProgram = labhelper::loadShaderProgram("../project/shaders/softparticles.vert", "../project/shaders/softparticles.frag");
+	postProcessProgram = labhelper::loadShaderProgram("../project/shaders/postprocess.vert", "../project/shaders/postprocess.frag");
+	particlesProgram = labhelper::loadShaderProgram("../project/shaders/particle.vert", "../project/shaders/particle.frag");
+	heightfieldProgram = labhelper::loadShaderProgram("../project/shaders/heightfield.vert", "../project/shaders/heightfield.frag");
+}
+
 void initGL()
 {
 	///////////////////////////////////////////////////////////////////////
 	//		Load Shaders
 	///////////////////////////////////////////////////////////////////////
-	backgroundProgram   = labhelper::loadShaderProgram("../project/shaders/background.vert", "../project/shaders/background.frag");
-	shaderProgram       = labhelper::loadShaderProgram("../project/shaders/shading.vert",    "../project/shaders/shading.frag");
-	simpleShaderProgram = labhelper::loadShaderProgram("../project/shaders/simple.vert",     "../project/shaders/simple.frag");
-	onlyParticlesProgram = labhelper::loadShaderProgram("../project/shaders/onlyparticles.vert", "../project/shaders/onlyparticles.frag");
-	postProcessProgram = labhelper::loadShaderProgram("../project/shaders/postprocess.vert", "../project/shaders/postprocess.frag");
-	particlesProgram = labhelper::loadShaderProgram("../project/shaders/particle.vert", "../project/shaders/particle.frag");
-	heightfieldProgram = labhelper::loadShaderProgram("../project/shaders/heightfield.vert", "../project/shaders/heightfield.frag");
+	loadShaders();
+
 	///////////////////////////////////////////////////////////////////////
 	// Load models and set up model matrices
 	///////////////////////////////////////////////////////////////////////
@@ -177,7 +182,7 @@ void initGL()
 	// Setup Particle Systems
 	///////////////////////////////////////////////////////////////////////////
 	GLuint explosion = labhelper::loadParticleTexture("../scenes/explosion.png");
-	particleSystem = ParticleSystem(1000, onlyParticlesProgram, explosion);
+	particleSystem = ParticleSystem(1000, &onlyParticlesProgram, explosion);
 
 	//Heightfield
 
@@ -316,7 +321,7 @@ void display(void)
 	FboInfo &postProcessBuffer = fboList[0];
 	glBindFramebuffer(GL_FRAMEBUFFER, postProcessBuffer.framebufferId);
 	glViewport(0, 0, windowWidth, windowHeight);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClearColor(0.0, 0.0, 0.0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	drawBackground(viewMatrix, projMatrix);
@@ -432,8 +437,10 @@ void gui()
 	// ----------------------------------------------------------
 	ImGui::Checkbox("Haze", &guiHaze);
 	ImGui::Checkbox("Affected by time", &guiHazeTime);
-	ImGui::DragFloat("Haze Magnitude", &guiHazeMagnitude, 1.0f, 0, 100);
-
+	ImGui::DragFloat("Haze Magnitude", &guiHazeMagnitude, 1.0f, 0, 1000);
+	// ----------------------------------------------------------
+	if (ImGui::Button("Reload shaders"))
+		loadShaders();
 	// Render the GUI.
 	ImGui::Render();
 }

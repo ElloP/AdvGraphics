@@ -15,7 +15,7 @@ class ParticleSystem {
  public:	
 	explicit ParticleSystem(){};
 
-	explicit ParticleSystem(int size, GLuint _shader, GLuint _texture) : max_size(size), shader(_shader), texture(_texture) {
+	explicit ParticleSystem(int size, GLuint* _shader, GLuint _texture) : max_size(size), shader(_shader), texture(_texture) {
 		glGenBuffers(1, &vbo);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 4 * max_size, nullptr, GL_STATIC_DRAW);
@@ -38,7 +38,7 @@ class ParticleSystem {
 private:
 	GLuint vao;
 	GLuint vbo;
-	GLuint shader;
+	GLuint* shader;
 	GLuint texture;
 	float time = 0;
 	float interval;

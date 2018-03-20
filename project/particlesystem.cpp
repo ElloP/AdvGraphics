@@ -53,14 +53,14 @@ void ParticleSystem::spawn() {
 }
 
 void ParticleSystem::draw(glm::mat4 view) {
-	glUseProgram(shader);
+	glUseProgram(*shader);
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	
 	glEnable(GL_PROGRAM_POINT_SIZE);
 
 	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	unsigned int active_particles = particles.size();
 
