@@ -102,6 +102,14 @@ mat4 fighterModelMatrix;
 HeightField heightfield;
 GLuint heigtfieldProgram;
 
+///////////////////////////////////////////////////////////////////////////////
+// GUI
+///////////////////////////////////////////////////////////////////////////////
+
+bool guiHaze;
+bool guiHazeTime;
+float guiHazeMagnitude;
+
 void loadShaders(bool is_reload)
 {
 	GLuint shader = labhelper::loadShaderProgram("../project/shaders/simple.vert", "../project/shaders/simple.frag", is_reload);
@@ -335,7 +343,10 @@ void display(void)
 	labhelper::setUniformSlow(onlyParticlesProgram, "screen_x", float(windowWidth));
 	labhelper::setUniformSlow(onlyParticlesProgram, "screen_y", float(windowHeight));
 	
-	//particleSystem.draw(viewMatrix);
+	
+	if (guiHaze) {
+		particleSystem.draw(viewMatrix);
+	}
 
 	///////////////////////////////////////////////////////////////////////////
 	// Draw final scene
@@ -352,8 +363,8 @@ void display(void)
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, hazeParticlesBuffer.colorTextureTargets[0]);
 
-	labhelper::setUniformSlow(postProcessProgram, "time", currentTime);
-
+	labhelper::setUniformSlow(postProcessProgram, "time", guiHazeTime ? currentTime : 1);
+	labhelper::setUniformSlow(postProcessProgram, "magnitude", guiHazeMagnitude);
 	labhelper::drawFullScreenQuad();
 }
 
@@ -419,6 +430,10 @@ void gui()
 	// ----------------- Set variables --------------------------
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	// ----------------------------------------------------------
+	ImGui::Checkbox("Haze", &guiHaze);
+	ImGui::Checkbox("Affected by time", &guiHazeTime);
+	ImGui::DragFloat("Haze Magnitude", &guiHazeMagnitude, 1.0f, 0, 100);
+
 	// Render the GUI.
 	ImGui::Render();
 }

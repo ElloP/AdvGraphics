@@ -4,9 +4,11 @@
 precision highp float;
 
 uniform float time;
+uniform float magnitude;
 
 layout(binding = 0) uniform sampler2D frameBufferTexture;
 layout(binding = 1) uniform sampler2D hazeBufferTexture;
+
 out vec4 color;
 
 
@@ -31,7 +33,7 @@ void main()
     vec4 frame = textureRect(frameBufferTexture, gl_FragCoord.xy);
     vec4 haze = textureRect(hazeBufferTexture, gl_FragCoord.xy);
 
-	vec2 distortion = sin(time * haze.xy) * 10;
+	vec2 distortion = sin(time * haze.xy) * magnitude;
 	vec2 distorted =  gl_FragCoord.xy + distortion;
     
     color = haze.x == 0 ? frame : particleRect(frameBufferTexture, distorted) + haze;
