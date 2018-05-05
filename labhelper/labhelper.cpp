@@ -575,6 +575,10 @@ namespace labhelper {
 	{
 		glUniform3fv(glGetUniformLocation(shaderProgram, name), 1, &value.x);
 	}
+	void setUniformSlow(GLuint shaderProgram, const char *name, const glm::vec2 &value)
+	{
+		glUniform3fv(glGetUniformLocation(shaderProgram, name), 1, &value.x);
+	}
 	void setUniformSlow(GLuint shaderProgram, const char *name, const uint32_t nof_values, const glm::vec3 * values)
 	{
 		glUniform3fv(glGetUniformLocation(shaderProgram, name), nof_values, (float *)values);

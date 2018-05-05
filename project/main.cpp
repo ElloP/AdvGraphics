@@ -25,6 +25,8 @@ using namespace glm;
 
 #include "heightfield.h"
 
+#include "Clouds/texture3D.h"
+
 
 
 
@@ -51,6 +53,7 @@ GLuint postProcessProgram;
 GLuint particlesProgram;
 GLuint onlyParticlesProgram;
 GLuint heightfieldProgram;
+GLuint cloudProgram;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Environment
@@ -110,6 +113,11 @@ bool guiHaze;
 bool guiHazeTime;
 float guiHazeMagnitude;
 
+/////////////////////
+// CLOUDS
+//////////////////////
+GLuint clouds;
+
 void loadShaders(bool is_reload)
 {
 	GLuint shader = labhelper::loadShaderProgram("../project/shaders/simple.vert", "../project/shaders/simple.frag", is_reload);
@@ -128,6 +136,7 @@ void loadShaders() {
 	postProcessProgram = labhelper::loadShaderProgram("../project/shaders/postprocess.vert", "../project/shaders/postprocess.frag");
 	particlesProgram = labhelper::loadShaderProgram("../project/shaders/particle.vert", "../project/shaders/particle.frag");
 	heightfieldProgram = labhelper::loadShaderProgram("../project/shaders/heightfield.vert", "../project/shaders/heightfield.frag");
+	cloudProgram = labhelper::loadShaderProgram("../project/shaders/postprocess.vert", "../project/shaders/clouds.frag");
 }
 
 void initGL()
@@ -163,6 +172,7 @@ void initGL()
 
 	glEnable(GL_DEPTH_TEST);	// enable Z-buffering 
 	glEnable(GL_CULL_FACE);		// enables backface culling
+	glEnable(GL_BLEND);
 
 	///////////////////////////////////////////////////////////////////////////
 	// Setup Framebuffers
@@ -183,6 +193,10 @@ void initGL()
 	///////////////////////////////////////////////////////////////////////////
 	GLuint explosion = labhelper::loadParticleTexture("../scenes/explosion.png");
 	particleSystem = ParticleSystem(1000, &onlyParticlesProgram, explosion);
+
+	// Clouds
+
+	clouds = load3DTexture("../project/clouds/cloudtexture.ex5");
 
 	//Heightfield
 
@@ -232,7 +246,7 @@ void drawScene(GLuint currentShaderProgram, const mat4 &viewMatrix, const mat4 &
 	labhelper::setUniformSlow(currentShaderProgram, "modelViewProjectionMatrix", projectionMatrix * viewMatrix * landingPadModelMatrix);
 	labhelper::setUniformSlow(currentShaderProgram, "modelViewMatrix", viewMatrix * landingPadModelMatrix);
 	labhelper::setUniformSlow(currentShaderProgram, "normalMatrix", inverse(transpose(viewMatrix * landingPadModelMatrix)));
-
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	labhelper::render(landingpadModel);
 
 	// Fighter
@@ -241,7 +255,7 @@ void drawScene(GLuint currentShaderProgram, const mat4 &viewMatrix, const mat4 &
 	labhelper::setUniformSlow(currentShaderProgram, "normalMatrix", inverse(transpose(viewMatrix * fighterModelMatrix)));
 
 	labhelper::render(fighterModel);
-
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 }
 void drawTerrain(GLuint currentShaderProgram, const mat4 &viewMatrix, const mat4 &projectionMatrix, const mat4 &lightViewMatrix, const mat4 &lightProjectionMatrix) {
@@ -269,9 +283,6 @@ void drawTerrain(GLuint currentShaderProgram, const mat4 &viewMatrix, const mat4
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	//"modelViewProjectionMatrix", projectionMatrix * viewMatrix
 	heightfield.submitTriangles();
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-
 }
 
 void update(void) {
@@ -291,7 +302,7 @@ void display(void)
 			windowHeight = h;
 		}
 	}
-
+	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	///////////////////////////////////////////////////////////////////////////
 	// setup matrices
 	///////////////////////////////////////////////////////////////////////////
@@ -334,8 +345,8 @@ void display(void)
 	// Post processing pass(es)
 	///////////////////////////////////////////////////////////////////////////
 
-	FboInfo &hazeParticlesBuffer = fboList[1];
-	glBindFramebuffer(GL_FRAMEBUFFER, hazeParticlesBuffer.framebufferId);
+	FboInfo &hazeOutlineBuffer = fboList[1];
+	glBindFramebuffer(GL_FRAMEBUFFER, hazeOutlineBuffer.framebufferId);
 	glViewport(0, 0, windowWidth, windowHeight);
 	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -354,9 +365,10 @@ void display(void)
 	}
 
 	///////////////////////////////////////////////////////////////////////////
-	// Draw final scene
+	// Draw Haze Particles
 	///////////////////////////////////////////////////////////////////////////
 
+	FboInfo &hazeParticlesBuffer = fboList[2];
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glViewport(0, 0, windowWidth, windowHeight);
 	glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -366,11 +378,28 @@ void display(void)
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, postProcessBuffer.colorTextureTargets[0]);
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, hazeParticlesBuffer.colorTextureTargets[0]);
+	glBindTexture(GL_TEXTURE_2D, hazeOutlineBuffer.colorTextureTargets[0]);
 
 	labhelper::setUniformSlow(postProcessProgram, "time", guiHazeTime ? currentTime : 1);
 	labhelper::setUniformSlow(postProcessProgram, "magnitude", guiHazeMagnitude);
 	labhelper::drawFullScreenQuad();
+
+	///////////////////////////////////////////////////////////////////////////
+	// Draw Clouds
+	///////////////////////////////////////////////////////////////////////////
+	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glUseProgram(cloudProgram);
+
+	labhelper::setUniformSlow(cloudProgram, "proj", projMatrix);
+	labhelper::setUniformSlow(cloudProgram, "view", viewMatrix);
+	labhelper::setUniformSlow(cloudProgram, "inv_proj", inverse(projMatrix));
+	labhelper::setUniformSlow(cloudProgram, "inv_view", inverse(viewMatrix));
+	labhelper::setUniformSlow(cloudProgram, "camera_pos", cameraPosition);
+	labhelper::setUniformSlow(cloudProgram, "camera_dir", cameraDirection);
+	labhelper::setUniformSlow(cloudProgram, "view_port", vec3(windowWidth,windowHeight,0));
+
+	labhelper::drawFullScreenQuad();
+	//glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 bool handleEvents(void)
