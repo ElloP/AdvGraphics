@@ -182,7 +182,7 @@ void main()
 	// Task 7 - Make glowy things glow!
 	///////////////////////////////////////////////////////////////////////////
 	vec3 emission_term = material_emission * material_color;
-
+	//fragmentColor.xyz = viewSpaceNormal;
 	fragmentColor.xyz =
 		direct_illumination_term +
 		indirect_illumination_term +

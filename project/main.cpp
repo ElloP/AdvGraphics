@@ -9,6 +9,7 @@ extern "C" _declspec(dllexport) unsigned int NvOptimusEnablement = 0x00000001;
 #include <cstdlib>
 #include <algorithm>
 #include <chrono>
+#include <iostream>
 
 #include <labhelper.h>
 #include <imgui.h>
@@ -26,6 +27,8 @@ using namespace glm;
 #include "heightfield.h"
 
 #include "Clouds/texture3D.h"
+
+#include "NoiseGenerator.h"
 
 
 
@@ -141,6 +144,7 @@ void loadShaders() {
 
 void initGL()
 {
+	
 	///////////////////////////////////////////////////////////////////////
 	//		Load Shaders
 	///////////////////////////////////////////////////////////////////////
@@ -337,7 +341,7 @@ void display(void)
 
 	drawBackground(viewMatrix, projMatrix);
 
-	drawTerrain(heightfieldProgram, viewMatrix, projMatrix, lightViewMatrix, lightProjMatrix);
+	//drawTerrain(heightfieldProgram, viewMatrix, projMatrix, lightViewMatrix, lightProjMatrix);
 	drawScene(shaderProgram, viewMatrix, projMatrix, lightViewMatrix, lightProjMatrix);
 	debugDrawLight(viewMatrix, projMatrix, vec3(lightPosition));
 
@@ -387,8 +391,11 @@ void display(void)
 	///////////////////////////////////////////////////////////////////////////
 	// Draw Clouds
 	///////////////////////////////////////////////////////////////////////////
-	//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glUseProgram(cloudProgram);
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_3D, clouds);
 
 	labhelper::setUniformSlow(cloudProgram, "proj", projMatrix);
 	labhelper::setUniformSlow(cloudProgram, "view", viewMatrix);
@@ -399,7 +406,7 @@ void display(void)
 	labhelper::setUniformSlow(cloudProgram, "view_port", vec3(windowWidth,windowHeight,0));
 
 	labhelper::drawFullScreenQuad();
-	//glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 bool handleEvents(void)
@@ -476,6 +483,8 @@ void gui()
 
 int main(int argc, char *argv[])
 {
+	//NoiseGenerator::generateNoiseTexture();
+	std::cout << "HEJHJEJHE";
 	g_window = labhelper::init_window_SDL("OpenGL Project");
 
 	initGL();
