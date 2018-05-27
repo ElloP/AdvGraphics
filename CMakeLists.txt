@@ -32,4 +32,6 @@ set ( CMAKE_BUILD_TYPE DEBUG )
 add_definitions ( -std=c++11 )
 
 add_subdirectory ( labhelper )
-add_subdirectory ( project )
+add_subdirectory ( clouds )
+add_subdirectory ( haze )
+add_subdirectory ( terrain )
